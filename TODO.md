@@ -1,7 +1,5 @@
 ## URGENT FIXES:
 
-- opennext build issues
-
 
 ## LATER IMPROVEMENTS:
 
