@@ -4,11 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js 15.4 application configured to deploy on Cloudflare Workers using OpenNext.js. It provides a modern starter template and uses:
+This is a Next.js 15.4 application configured to deploy on Cloudflare Workers using OpenNext.js. It provides a modern starter template with AI capabilities and uses:
 - **Framework**: Next.js App Router with TypeScript, React 19
 - **Styling**: Tailwind CSS v4, shadcn/ui components
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
 - **Auth**: Better Auth with magic link authentication
+- **Storage**: Cloudflare R2 (S3-compatible object storage)
+- **AI Image Gen**: Replicate (Imagen 4, FLUX models)
+- **AI LLM**: OpenRouter + AI SDK 5 (GPT, Gemini, Claude)
 - **Package Manager**: pnpm (not npm)
 
 ## Centralized Configuration
@@ -183,15 +186,32 @@ This project uses GitHub Actions for automated deployments:
 - **Important**: Database migrations run automatically on every deployment - no manual migration commands needed!
 - **Setup**: See `SETUP.md` for complete setup instructions
 
-### Required GitHub Secrets
+### Required GitHub Secrets (12 total)
+The setup script can configure these automatically via GitHub CLI, or you can add them manually:
+
+**Cloudflare:**
 - `CLOUDFLARE_API_TOKEN`: Cloudflare API token with Workers and D1 edit permissions
 - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+
+**Auth (Different per environment):**
 - `BETTER_AUTH_SECRET_STAGING`: Auth secret for staging (generate with `openssl rand -base64 32`)
 - `BETTER_AUTH_SECRET_PRODUCTION`: Auth secret for production (use different value!)
-- `POSTMARK_API_KEY`: Email service API key (shared across environments)
-- `EMAIL_FROM`: Email sender address (shared across environments)
 
-Note: No DATABASE_URL needed - D1 is accessed via Cloudflare bindings.
+**Email (Shared):**
+- `POSTMARK_API_KEY`: Email service API key
+- `EMAIL_FROM`: Email sender address
+
+**R2 Storage (Different per environment):**
+- `R2_ACCESS_KEY_ID_STAGING`: R2 access key for staging bucket
+- `R2_SECRET_ACCESS_KEY_STAGING`: R2 secret key for staging bucket
+- `R2_ACCESS_KEY_ID_PRODUCTION`: R2 access key for production bucket
+- `R2_SECRET_ACCESS_KEY_PRODUCTION`: R2 secret key for production bucket
+
+**AI Features (Shared, optional):**
+- `REPLICATE_API_KEY`: For AI image generation
+- `OPENROUTER_API_KEY`: For LLM chatbot
+
+**Note**: The setup script creates R2 credentials automatically and can set all GitHub secrets via `gh` CLI.
 
 ## Environment Variables
 
@@ -306,3 +326,58 @@ Authentication is handled by Better Auth with magic link (email-only):
 - **Database**: Uses Better Auth's automatic D1 table creation
 
 **Important**: Auth instance must be created per-request using `createAuth()` to access Cloudflare context.
+
+### AI Features
+
+#### OpenRouter LLM Integration
+This starter includes LLM integration via OpenRouter and AI SDK 5:
+
+- **Service Layer**: `src/lib/services/llm/` - LLM service with text generation, streaming, and structured output
+- **Chat API**: `src/app/api/chat/route.ts` - Streaming chat endpoint using AI SDK
+- **Chatbot Component**: `src/components/chatbot.tsx` - UI with model selection (GPT-4.1 Mini, Gemini 2.5 Flash, Claude Haiku 4.5)
+- **Models**: Configured in `src/lib/services/llm/types.ts`
+
+**Setup:**
+```typescript
+// In API route:
+import { streamText } from 'ai';
+import { getOpenRouter } from '@/lib/services/llm/llm';
+
+const openrouter = getOpenRouter();
+const result = streamText({
+  model: openrouter('openai/gpt-4.1-mini'),
+  messages,
+});
+
+return result.toUIMessageStreamResponse();
+```
+
+**Environment variable**: `OPENROUTER_API_KEY` (required for LLM features)
+
+#### Replicate AI Integration
+Image generation via Replicate API:
+
+- **Service Layer**: `src/lib/services/replicate/` - Image generation with multiple models
+- **Image Generator**: `src/components/image-generator.tsx` - UI for generating images
+- **Supported Models**: Google Imagen 4 Ultra, FLUX 1.1 Pro, FLUX Schnell
+- **Storage**: Generated images automatically uploaded to R2
+
+**Environment variable**: `REPLICATE_API_KEY` (required for image generation)
+
+#### Cloudflare R2 Storage
+Object storage for user uploads and AI-generated content:
+
+- **Service Layer**: `src/lib/services/s3/` - S3-compatible R2 client
+- **Upload API**: `src/app/api/upload/route.ts` - Multi-file upload endpoint
+- **Image Upload**: `src/components/image-upload.tsx` - Drag-and-drop upload UI
+- **CDN Integration**: Automatic image transformations via Cloudflare
+- **Helper**: `getTransformedImageUrl()` for responsive images
+
+**Environment variables:**
+- `S3_ACCESS_ID_KEY` - R2 access key
+- `S3_SECRET_ACCESS_KEY` - R2 secret key
+- `S3_BUCKET_NAME` - R2 bucket name
+- `S3_PUBLIC_ENDPOINT` - CDN URL for serving files
+- `NEXT_PUBLIC_S3_ENDPOINT` - Client-side CDN URL
+
+**Note**: R2 credentials are created automatically by the setup script.
