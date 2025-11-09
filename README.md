@@ -1,6 +1,6 @@
-# Next.js + Cloudflare Workers Starter
+# Next.js + Cloudflare Workers + AI (chat and images) Starter
 
-A production-ready Next.js 15 starter template optimized for Cloudflare Workers with D1 database, authentication, and automated deployments.
+A production-ready Next.js 15 starter template optimized for Cloudflare Workers with D1 database, authentication via magic link, primitives for AI chats and image gen, and automated deployments.
 
 ## Features
 

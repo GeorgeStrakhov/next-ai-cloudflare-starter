@@ -1125,7 +1125,7 @@ if [ "$GIT_INITIALIZED" = true ]; then
 
                 # Create GitHub repository
                 print_info "Creating GitHub repository..."
-                if gh repo create "${PROJECT_NAME}" --${REPO_VISIBILITY} --source=. --remote=origin --description="${APP_DESCRIPTION}"; then
+                if gh repo create "${PROJECT_NAME_LOWER}" --${REPO_VISIBILITY} --source=. --remote=origin --description="${APP_DESCRIPTION}"; then
                     print_success "GitHub repository created"
 
                     # Push all branches
@@ -1193,13 +1193,13 @@ if [ "$GIT_INITIALIZED" = true ]; then
         echo ""
         echo -e "${YELLOW}1. Create a new GitHub repository${NC}"
         echo "   • Go to: https://github.com/new"
-        echo "   • Name: ${PROJECT_NAME}"
+        echo "   • Name: ${PROJECT_NAME_LOWER}"
         echo "   • Visibility: Private (recommended)"
         echo "   • Do NOT initialize with README, .gitignore, or license"
         echo ""
 
         echo -e "${YELLOW}2. Push your code to GitHub${NC}"
-        echo -e "   ${BLUE}git remote add origin git@github.com:YOUR_USERNAME/${PROJECT_NAME}.git${NC}"
+        echo -e "   ${BLUE}git remote add origin git@github.com:YOUR_USERNAME/${PROJECT_NAME_LOWER}.git${NC}"
         echo -e "   ${BLUE}git push -u origin main${NC}"
         echo -e "   ${BLUE}git push origin stage${NC}"
         echo -e "   ${BLUE}git push origin prod${NC}"
