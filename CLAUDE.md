@@ -371,19 +371,41 @@ Image generation via Replicate API:
 **Environment variable**: `REPLICATE_API_KEY` (required for image generation)
 
 #### Cloudflare R2 Storage
-Object storage for user uploads and AI-generated content:
+Object storage for user uploads and AI-generated content using **native Cloudflare Workers R2 bindings**:
 
-- **Service Layer**: `src/lib/services/s3/` - S3-compatible R2 client
+- **Service Layer**: `src/lib/services/s3/` - Native R2 client using Workers API
 - **Upload API**: `src/app/api/upload/route.ts` - Multi-file upload endpoint
 - **Image Upload**: `src/components/image-upload.tsx` - Drag-and-drop upload UI
 - **CDN Integration**: Automatic image transformations via Cloudflare
 - **Helper**: `getTransformedImageUrl()` for responsive images
 
-**Environment variables:**
-- `S3_ACCESS_ID_KEY` - R2 access key
-- `S3_SECRET_ACCESS_KEY` - R2 secret key
-- `S3_BUCKET_NAME` - R2 bucket name
-- `S3_PUBLIC_ENDPOINT` - CDN URL for serving files
-- `NEXT_PUBLIC_S3_ENDPOINT` - Client-side CDN URL
+**Setup:**
+```typescript
+// Access R2 bucket via Cloudflare context
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-**Note**: R2 credentials are created automatically by the setup script.
+const { env } = await getCloudflareContext();
+const bucket = env.R2_BUCKET;
+
+// Upload file
+await bucket.put(key, fileBody, {
+  httpMetadata: { contentType: 'image/jpeg' },
+  customMetadata: { userId: '123' }
+});
+```
+
+**Configuration:**
+- R2 bucket binding added to `wrangler.jsonc` as `R2_BUCKET`
+- Bucket names: `{project-name}-storage` (production), `{project-name}-storage-staging` (staging)
+- Setup script automatically creates buckets and configures bindings
+
+**Environment variables:**
+- `S3_PUBLIC_ENDPOINT` - CDN URL for serving files (e.g., `https://cdn.your-domain.com`)
+- `NEXT_PUBLIC_S3_ENDPOINT` - Client-side CDN URL (same as above for public access)
+
+**Important Notes:**
+- ✅ Uses **native R2 bindings** (not AWS SDK) - optimized for Cloudflare Workers
+- ✅ No filesystem access required (fixes AWS SDK compatibility issues)
+- ✅ Public URLs constructed using CDN endpoint + object key
+- ✅ Custom domain configured via Cloudflare dashboard connects to R2 bucket
+- ✅ R2 buckets and custom domains are created automatically by the setup script

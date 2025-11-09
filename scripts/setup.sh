@@ -614,6 +614,12 @@ sed -i.tmp "s/\"database_id\": \"YOUR_PRODUCTION_DATABASE_ID\"/\"database_id\": 
 sed -i.tmp "s/\"database_name\": \"my-app-db-staging\"/\"database_name\": \"${PROJECT_NAME_LOWER}-db-staging\"/" wrangler.jsonc
 sed -i.tmp "s/\"database_id\": \"YOUR_STAGING_DATABASE_ID\"/\"database_id\": \"${STAGING_DB_ID}\"/" wrangler.jsonc
 
+# Update production R2 bucket (use lowercase for wrangler)
+sed -i.tmp "s/\"bucket_name\": \"my-app-storage\"/\"bucket_name\": \"${PROJECT_NAME_LOWER}-storage\"/" wrangler.jsonc
+
+# Update staging R2 bucket (use lowercase for wrangler)
+sed -i.tmp "s/\"bucket_name\": \"my-app-storage-staging\"/\"bucket_name\": \"${PROJECT_NAME_LOWER}-storage-staging\"/" wrangler.jsonc
+
 # Update production domains
 sed -i.tmp "s/\"pattern\": \"your-domain.com\"/\"pattern\": \"${PROD_DOMAIN}\"/" wrangler.jsonc
 sed -i.tmp "s/\"pattern\": \"www.your-domain.com\"/\"pattern\": \"www.${PROD_DOMAIN}\"/" wrangler.jsonc

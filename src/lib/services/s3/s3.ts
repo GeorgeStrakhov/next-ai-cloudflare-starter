@@ -1,15 +1,6 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v4 as uuidv4 } from "uuid";
 import slugify from "slugify";
-
-const s3Client = new S3Client({
-  endpoint: process.env.S3_ENDPOINT_URL,
-  region: process.env.S3_REGION || "weur",
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_ID_KEY!,
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
-  },
-});
 
 export interface UploadOptions {
   folder?: string;
@@ -39,7 +30,7 @@ function createUniqueFilename(filename: string): string {
   const slugifiedName = slugify(nameWithoutExtension, {
     lower: true, // Convert to lowercase
     strict: true, // Strip special characters except replacement
-    remove: /[*+~.()'"!:@]/g, // Remove these characters
+    remove: /[*+~.()'\"!:@]/g, // Remove these characters
     replacement: "-", // Replace spaces and other chars with -
     trim: true, // Trim leading/trailing replacement chars
   });
@@ -55,7 +46,7 @@ function createUniqueFilename(filename: string): string {
 }
 
 /**
- * Upload a file to S3/R2 bucket
+ * Upload a file to R2 bucket using native Cloudflare Workers R2 API
  * @param file File buffer or Blob
  * @param filename Original filename (will be slugified with UUID appended)
  * @param options Upload options
@@ -71,32 +62,39 @@ export async function uploadFile(
   const uniqueFilename = createUniqueFilename(filename);
   const key = folder ? `${folder}/${uniqueFilename}` : uniqueFilename;
 
-  let fileBuffer: Buffer;
+  let fileBody: ArrayBuffer | Uint8Array;
   let fileSize: number;
 
   if (file instanceof Blob) {
-    const arrayBuffer = await file.arrayBuffer();
-    fileBuffer = Buffer.from(arrayBuffer);
+    fileBody = await file.arrayBuffer();
     fileSize = file.size;
   } else if (file instanceof Uint8Array) {
-    fileBuffer = Buffer.from(file);
+    fileBody = file;
     fileSize = file.length;
   } else {
-    fileBuffer = file as Buffer;
-    fileSize = (file as Buffer).length;
+    // Buffer
+    fileBody = file;
+    fileSize = file.length;
   }
 
-  const command = new PutObjectCommand({
-    Bucket: process.env.S3_BUCKET_NAME,
-    Key: key,
-    Body: fileBuffer,
-    ContentType: contentType || getContentType(filename),
-    Metadata: metadata,
-  });
-
   try {
-    await s3Client.send(command);
+    // Get R2 bucket from Cloudflare context
+    const { env } = await getCloudflareContext();
+    const bucket = env.R2_BUCKET;
 
+    if (!bucket) {
+      throw new Error("R2_BUCKET binding not found in Cloudflare environment");
+    }
+
+    // Upload to R2
+    await bucket.put(key, fileBody, {
+      httpMetadata: {
+        contentType: contentType || getContentType(filename),
+      },
+      customMetadata: metadata,
+    });
+
+    // Construct public URL
     const publicUrl = `${process.env.NEXT_PUBLIC_S3_ENDPOINT || process.env.S3_PUBLIC_ENDPOINT}/${key}`;
 
     return {
@@ -105,7 +103,7 @@ export async function uploadFile(
       size: fileSize,
     };
   } catch (error) {
-    console.error("S3 upload error:", error);
+    console.error("R2 upload error:", error);
     throw new Error(
       `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -235,7 +233,7 @@ function getContentType(filename: string): string {
 
 /**
  * Generate a public URL for a given key
- * @param key The S3 object key
+ * @param key The R2 object key
  * @returns Public URL
  */
 export function getPublicUrl(key: string): string {
@@ -245,7 +243,7 @@ export function getPublicUrl(key: string): string {
 /**
  * Extract the key from a public URL
  * @param publicUrl The public URL
- * @returns The S3 object key
+ * @returns The R2 object key
  */
 export function getKeyFromUrl(publicUrl: string): string {
   const endpoint =

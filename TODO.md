@@ -3,6 +3,7 @@
 
 ## LATER IMPROVEMENTS:
 
+- add logging and alerting (investigate best setup on cloudflare)
 - add analytics setup with custom events
 - add waitlist feature
 - add user account with profile pic etc
