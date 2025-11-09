@@ -51,3 +51,7 @@ next-env.d.ts
 
 # GitHub secrets helper (contains sensitive credentials)
 .github-secrets-setup.txt
+
+# Setup script backup files
+*.backup
+**/*.backup
