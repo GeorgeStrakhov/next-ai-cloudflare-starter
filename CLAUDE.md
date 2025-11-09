@@ -121,6 +121,7 @@ This application is configured specifically for Cloudflare Workers deployment vi
 - **Assets**: Static assets are served from `.open-next/assets` directory via Cloudflare's asset binding
 - **Worker Entry**: Main worker file is `.open-next/worker.js` (generated during build)
 - **Cloudflare Context**: Use `getCloudflareContext()` to access Cloudflare bindings (env vars, KV, R2, etc.) during request handling
+- **Runtime**: Use Node.js runtime (default), NOT edge runtime. Do not add `export const runtime = "edge"` to API routes - OpenNext.js requires Node.js runtime for Cloudflare Workers deployment
 
 ### App Structure
 - **App Router**: Uses Next.js App Router (`src/app/` directory)
@@ -339,7 +340,7 @@ This starter includes LLM integration via OpenRouter and AI SDK 5:
 
 **Setup:**
 ```typescript
-// In API route:
+// In API route (uses Node.js runtime, NOT edge):
 import { streamText } from 'ai';
 import { getOpenRouter } from '@/lib/services/llm/llm';
 
@@ -351,6 +352,11 @@ const result = streamText({
 
 return result.toUIMessageStreamResponse();
 ```
+
+**Important**:
+- Do NOT use `export const runtime = "edge"` - OpenNext.js requires Node.js runtime
+- Streaming works perfectly with Node.js runtime on Cloudflare Workers
+- The AI SDK `streamText()` and `toUIMessageStreamResponse()` support both runtimes
 
 **Environment variable**: `OPENROUTER_API_KEY` (required for LLM features)
 

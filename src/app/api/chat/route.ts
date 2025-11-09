@@ -2,7 +2,6 @@ import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { LLM_MODELS, type LLMModel } from "@/lib/services/llm";
 
-export const runtime = "edge";
 export const maxDuration = 30;
 
 function getOpenRouter() {
