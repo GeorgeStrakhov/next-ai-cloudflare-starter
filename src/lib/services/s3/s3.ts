@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v4 as uuidv4 } from "uuid";
 import slugify from "slugify";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export interface UploadOptions {
   folder?: string;
@@ -62,7 +63,7 @@ export async function uploadFile(
   const uniqueFilename = createUniqueFilename(filename);
   const key = folder ? `${folder}/${uniqueFilename}` : uniqueFilename;
 
-  let fileBody: ArrayBuffer | Uint8Array;
+  let fileBody: ArrayBuffer | Uint8Array | Buffer;
   let fileSize: number;
 
   if (file instanceof Blob) {
@@ -74,7 +75,7 @@ export async function uploadFile(
   } else {
     // Buffer
     fileBody = file;
-    fileSize = file.length;
+    fileSize = (file as Buffer).length;
   }
 
   try {
@@ -86,7 +87,41 @@ export async function uploadFile(
       throw new Error("R2_BUCKET binding not found in Cloudflare environment");
     }
 
-    // Upload to R2
+    // In local development, use AWS SDK to upload to real R2 bucket
+    // This allows testing with real URLs that AI APIs (Replicate, OpenAI) can access
+    // In deployed environments (staging/production), use native R2 bindings
+    const isDevelopment = process.env.NODE_ENV === "development";
+
+    if (isDevelopment) {
+      const s3Client = new S3Client({
+        endpoint: process.env.S3_ENDPOINT_URL,
+        region: process.env.S3_REGION || "weur",
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_ID_KEY!,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        },
+      });
+
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: key,
+          Body: fileBody as Buffer | Uint8Array,
+          ContentType: contentType || getContentType(filename),
+          Metadata: metadata,
+        }),
+      );
+
+      const publicUrl = `${process.env.NEXT_PUBLIC_S3_ENDPOINT || process.env.S3_PUBLIC_ENDPOINT}/${key}`;
+
+      return {
+        key,
+        publicUrl,
+        size: fileSize,
+      };
+    }
+
+    // Upload to R2 using native bindings (production/staging deployments)
     await bucket.put(key, fileBody, {
       httpMetadata: {
         contentType: contentType || getContentType(filename),

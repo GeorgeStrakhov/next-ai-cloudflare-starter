@@ -404,8 +404,21 @@ await bucket.put(key, fileBody, {
 - `NEXT_PUBLIC_S3_ENDPOINT` - Client-side CDN URL (same as above for public access)
 
 **Important Notes:**
-- ✅ Uses **native R2 bindings** (not AWS SDK) - optimized for Cloudflare Workers
-- ✅ No filesystem access required (fixes AWS SDK compatibility issues)
-- ✅ Public URLs constructed using CDN endpoint + object key
+- ✅ **Production/Staging**: Uses native R2 bindings (optimized for Cloudflare Workers)
+- ✅ **Local Development**: Uses AWS SDK with staging R2 credentials (allows real URLs for AI API testing)
+- ✅ AWS SDK is installed as `devDependency` only - not included in production builds
+- ✅ Local dev uploads to real staging R2 bucket so AI APIs (Replicate, OpenAI) can access the images
+- ✅ Automatic environment detection via `process.env.NODE_ENV`
+
+**Local Development Setup:**
+To test file uploads locally with real URLs, ensure `.dev.vars` contains:
+```bash
+S3_ENDPOINT_URL=https://....r2.cloudflarestorage.com
+S3_ACCESS_ID_KEY=your_access_key
+S3_SECRET_ACCESS_KEY=your_secret_key
+S3_BUCKET_NAME=your-project-storage-staging
+S3_PUBLIC_ENDPOINT=https://cdn-staging.your-domain.com
+```
+These credentials are automatically configured by the setup script to point to your staging R2 bucket.
 - ✅ Custom domain configured via Cloudflare dashboard connects to R2 bucket
 - ✅ R2 buckets and custom domains are created automatically by the setup script

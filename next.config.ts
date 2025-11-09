@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Use custom loader to bypass Next.js optimization
+    // Cloudflare handles optimization via /cdn-cgi/image/ transforms
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
   },
 };
 
