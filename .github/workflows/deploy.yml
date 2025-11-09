@@ -1,0 +1,107 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches:
+      - stage  # Deploy to staging environment
+      - prod   # Deploy to production environment
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate database migrations
+        run: pnpm db:generate
+
+      - name: Apply D1 migrations (Staging)
+        if: github.ref == 'refs/heads/stage'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm db:migrate:staging
+
+      - name: Apply D1 migrations (Production)
+        if: github.ref == 'refs/heads/prod'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm db:migrate:production
+
+      - name: Set Cloudflare secrets (Staging)
+        if: github.ref == 'refs/heads/stage'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "${{ secrets.BETTER_AUTH_SECRET_STAGING }}" | npx wrangler secret put BETTER_AUTH_SECRET --env staging
+          echo "${{ secrets.POSTMARK_API_KEY }}" | npx wrangler secret put POSTMARK_API_KEY --env staging
+          echo "${{ secrets.EMAIL_FROM }}" | npx wrangler secret put EMAIL_FROM --env staging
+          echo "${{ secrets.R2_ACCESS_KEY_ID_STAGING }}" | npx wrangler secret put S3_ACCESS_ID_KEY --env staging
+          echo "${{ secrets.R2_SECRET_ACCESS_KEY_STAGING }}" | npx wrangler secret put S3_SECRET_ACCESS_KEY --env staging
+          echo "${{ secrets.REPLICATE_API_KEY }}" | npx wrangler secret put REPLICATE_API_KEY --env staging
+          echo "${{ secrets.OPENROUTER_API_KEY }}" | npx wrangler secret put OPENROUTER_API_KEY --env staging
+
+      - name: Set Cloudflare secrets (Production)
+        if: github.ref == 'refs/heads/prod'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "${{ secrets.BETTER_AUTH_SECRET_PRODUCTION }}" | npx wrangler secret put BETTER_AUTH_SECRET
+          echo "${{ secrets.POSTMARK_API_KEY }}" | npx wrangler secret put POSTMARK_API_KEY
+          echo "${{ secrets.EMAIL_FROM }}" | npx wrangler secret put EMAIL_FROM
+          echo "${{ secrets.R2_ACCESS_KEY_ID_PRODUCTION }}" | npx wrangler secret put S3_ACCESS_ID_KEY
+          echo "${{ secrets.R2_SECRET_ACCESS_KEY_PRODUCTION }}" | npx wrangler secret put S3_SECRET_ACCESS_KEY
+          echo "${{ secrets.REPLICATE_API_KEY }}" | npx wrangler secret put REPLICATE_API_KEY
+          echo "${{ secrets.OPENROUTER_API_KEY }}" | npx wrangler secret put OPENROUTER_API_KEY
+
+      - name: Build and Deploy to Cloudflare (Staging)
+        if: github.ref == 'refs/heads/stage'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET_STAGING }}
+          BETTER_AUTH_URL: https://staging.your-domain.com
+          # Build-time environment variables (baked into client bundle)
+          NEXT_PUBLIC_APP_URL: https://staging.your-domain.com
+          NEXT_PUBLIC_APP_ENV: staging
+          NEXT_PUBLIC_APP_NAME: My App
+          NEXT_PUBLIC_APP_DESCRIPTION: My awesome application
+          NEXT_PUBLIC_SUPPORT_EMAIL: hello@your-domain.com
+          NEXT_PUBLIC_S3_ENDPOINT: https://cdn-staging.your-domain.com
+        run: pnpm run deploy:staging
+
+      - name: Build and Deploy to Cloudflare (Production)
+        if: github.ref == 'refs/heads/prod'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET_PRODUCTION }}
+          BETTER_AUTH_URL: https://your-domain.com
+          # Build-time environment variables (baked into client bundle)
+          NEXT_PUBLIC_APP_URL: https://your-domain.com
+          NEXT_PUBLIC_APP_ENV: production
+          NEXT_PUBLIC_APP_NAME: My App
+          NEXT_PUBLIC_APP_DESCRIPTION: My awesome application
+          NEXT_PUBLIC_SUPPORT_EMAIL: hello@your-domain.com
+          NEXT_PUBLIC_S3_ENDPOINT: https://cdn.your-domain.com
+        run: pnpm run deploy:production

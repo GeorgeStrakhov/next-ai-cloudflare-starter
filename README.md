@@ -1,0 +1,345 @@
+# Next.js + Cloudflare Workers Starter
+
+A production-ready Next.js 15 starter template optimized for Cloudflare Workers with D1 database, authentication, and automated deployments.
+
+## Features
+
+- ✨ **Next.js 15.4** with App Router and React 19
+- ⚡ **Cloudflare Workers** deployment via OpenNext.js
+- 🗄️ **Cloudflare D1** serverless SQLite database
+- 🔍 **Drizzle ORM** for type-safe database access
+- 🔐 **Better Auth** with magic link authentication
+- 🎨 **Tailwind CSS v4** + **shadcn/ui** components
+- 📧 **Postmark** email integration
+- 🪣 **Cloudflare R2** object storage with CDN
+- 🖼️ **Image transformations** via Cloudflare
+- 🤖 **Replicate AI** integration for image generation
+- 🧠 **OpenRouter LLM** integration with AI SDK (chatbot with GPT, Gemini, Claude)
+- 🚀 **GitHub Actions** CI/CD pipeline
+- 🌍 **Three-environment setup**: Local → Staging → Production
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm (`npm install -g pnpm`)
+- Cloudflare account (free tier works!)
+- Postmark account (free tier available)
+- Replicate account (optional, for AI features)
+- OpenRouter account (optional, for LLM chatbot)
+- GitHub CLI (optional, for automated setup)
+
+### Installation
+
+**Automated Setup (Recommended)**
+
+```bash
+git clone https://github.com/GeorgeStrakhov/next-ai-cloudflare-starter
+cd next-ai-cloudflare-starter
+bash scripts/setup.sh
+```
+
+**What the setup script does:**
+
+1. **Collects configuration** - Project name, domains, API keys
+2. **Creates Cloudflare resources** - D1 databases (staging/prod), R2 buckets, API tokens
+3. **⚠️ Wipes .git directory** - Removes template history, creates fresh git repo for your project
+4. **Updates all config files** - package.json, wrangler.jsonc, environment files
+5. **Installs dependencies** - Runs pnpm install and database migrations
+6. **GitHub setup** (if GitHub CLI installed):
+   - Creates new GitHub repository
+   - Pushes all branches (main, stage, prod)
+   - Sets all 12 GitHub secrets for CI/CD
+
+After completion: `pnpm dev` starts your app at http://localhost:3000
+
+**Manual Setup (if you prefer)**
+
+```bash
+# Clone and install
+git clone https://github.com/GeorgeStrakhov/next-ai-cloudflare-starter
+cd next-ai-cloudflare-starter
+pnpm install
+
+# Copy environment variables
+cp .dev.vars.example .dev.vars
+
+# Edit .dev.vars with your values
+# Then run:
+pnpm dev
+```
+
+Visit http://localhost:3000
+
+## Documentation
+
+📚 **Complete guides available:**
+
+- **[SETUP.md](./SETUP.md)** - Complete setup and deployment guide (start here!)
+- **[CLAUDE.md](./CLAUDE.md)** - Detailed development documentation for Claude Code and developers
+- **[.dev.vars.example](./.dev.vars.example)** - Environment variables reference
+
+## Tech Stack
+
+| Category       | Technology                    |
+|----------------|-------------------------------|
+| Framework      | Next.js 15.4 (App Router)     |
+| Runtime        | Cloudflare Workers            |
+| Database       | Cloudflare D1 (SQLite)        |
+| ORM            | Drizzle ORM                   |
+| Auth           | Better Auth (magic link)      |
+| Email          | Postmark                      |
+| Storage        | Cloudflare R2 (S3-compatible) |
+| AI Images      | Replicate                     |
+| AI LLM         | OpenRouter + AI SDK           |
+| Styling        | Tailwind CSS v4               |
+| UI Components  | shadcn/ui + Radix UI          |
+| Package Manager| pnpm                          |
+| CI/CD          | GitHub Actions                |
+
+## Key Commands
+
+### Development
+```bash
+pnpm dev              # Start dev server
+pnpm build            # Build for production
+pnpm lint             # Run linter
+pnpm preview          # Preview production build
+```
+
+### Database
+```bash
+pnpm db:generate             # Generate migrations
+pnpm db:migrate:local        # Run migrations locally
+pnpm db:studio               # Open database GUI
+```
+
+### Deployment
+```bash
+pnpm deploy:staging          # Deploy to staging
+pnpm deploy:production       # Deploy to production
+```
+
+See [SETUP.md](./SETUP.md) for more commands and details.
+
+## Deployment Strategy
+
+Three-branch workflow for safe deployments:
+
+```
+main (local development)
+  ↓ merge
+stage → auto-deploys to staging.your-domain.com
+  ↓ merge
+prod → auto-deploys to your-domain.com
+```
+
+**What Happens on Push:**
+1. Database migrations automatically applied
+2. Application built and deployed
+3. Zero downtime
+
+**Benefits:**
+- Test changes on staging before production
+- Automated database migrations (no manual steps!)
+- Zero-downtime deployments
+- Easy rollbacks
+
+## Customization
+
+Everything is configured through environment variables and `src/lib/config.ts`:
+
+**Set these variables:**
+```bash
+NEXT_PUBLIC_APP_NAME=My App
+NEXT_PUBLIC_APP_DESCRIPTION=My awesome application
+NEXT_PUBLIC_SUPPORT_EMAIL=support@mydomain.com
+EMAIL_FROM=noreply@mydomain.com
+```
+
+**Replace these values:**
+- Project name: `my-app` → `your-app-name` (lowercase, alphanumeric, dashes only)
+  - Update in: `wrangler.jsonc`, `package.json`, `scripts/`
+  - Requirements: lowercase letters, numbers, dashes only (no dots, underscores, or spaces)
+- Logo: `/public/logo.svg`
+- Styling: `src/app/globals.css`
+
+See [SETUP.md](./SETUP.md#customization) for detailed instructions.
+
+## Project Structure
+
+```
+src/
+├── app/                      # Next.js pages
+│   ├── page.tsx              # Home page
+│   ├── sign-in/              # Auth pages
+│   ├── dashboard/            # Protected routes
+│   └── api/auth/             # Auth API routes
+├── components/
+│   ├── ui/                   # shadcn/ui components
+│   └── auth/                 # Auth components
+├── db/
+│   └── schema/               # Database schema
+├── lib/
+│   ├── config.ts             # 🎯 Central configuration
+│   ├── auth.ts               # Auth setup
+│   ├── email/                # Email templates
+│   └── services/             # Service layers
+└── styles/
+```
+
+## Authentication
+
+Uses Better Auth with magic link (passwordless):
+
+1. User enters email
+2. Receives magic link via email
+3. Clicks link to sign in
+4. Session persists for 7 days
+
+**Protect routes:**
+```typescript
+import { createAuth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+export default async function DashboardPage() {
+  const auth = await createAuth();
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) redirect("/sign-in");
+
+  return <div>Welcome {session.user.email}!</div>;
+}
+```
+
+## Environment Variables
+
+### Required
+| Variable              | Description                    |
+|-----------------------|--------------------------------|
+| `BETTER_AUTH_SECRET`  | Auth secret (32+ chars)        |
+| `BETTER_AUTH_URL`     | Auth callback URL              |
+| `EMAIL_FROM`          | Verified sender address        |
+
+### Required for Production
+| Variable              | Description                    |
+|-----------------------|--------------------------------|
+| `POSTMARK_API_KEY`    | Email API key (optional for local dev - emails logged to console) |
+
+### Optional (AI Features)
+| Variable              | Description                    |
+|-----------------------|--------------------------------|
+| `REPLICATE_API_KEY`   | AI image generation (optional) |
+| `OPENROUTER_API_KEY`  | LLM chatbot (optional)         |
+
+### Recommended
+| Variable                      | Description                 |
+|-------------------------------|-----------------------------|
+| `NEXT_PUBLIC_APP_NAME`        | Your app name               |
+| `NEXT_PUBLIC_APP_DESCRIPTION` | App tagline                 |
+| `NEXT_PUBLIC_APP_ENV`         | Environment (dev/stage/prod)|
+
+See [.dev.vars.example](./.dev.vars.example) for complete list.
+
+## Production Checklist
+
+The setup script handles most of these automatically, but if setting up manually:
+
+- [ ] Run `bash scripts/setup.sh` (recommended) OR:
+  - [ ] Update project name in `wrangler.jsonc`, `package.json`, and scripts
+  - [ ] Create D1 databases (staging + production)
+  - [ ] Create R2 buckets (staging + production)
+  - [ ] Set GitHub secrets for CI/CD (12 secrets)
+  - [ ] Configure custom domains in Cloudflare
+- [ ] Verify email sender in Postmark
+- [ ] Test auth flow end-to-end
+- [ ] Test AI features (image generation, chatbot) if API keys are configured
+- [ ] Review security settings
+
+**Note:** Database migrations run automatically via GitHub Actions on deployment!
+
+**See [SETUP.md](./SETUP.md) for step-by-step manual guide.**
+
+## Why This Stack?
+
+**Cloudflare Workers**
+- ⚡ Edge deployment (low latency worldwide)
+- 💰 Generous free tier
+- 🔒 Built-in DDoS protection
+
+**Cloudflare D1**
+- 🚀 Serverless SQLite
+- 🆓 5M reads/day free
+- 🔄 Point-in-time recovery
+
+**Better Auth**
+- 🔐 Secure passwordless auth
+- 📧 Magic link out-of-the-box
+- 🎨 Customizable
+
+**Next.js 15**
+- ⚛️ React 19 with Server Components
+- 🎯 App Router for modern patterns
+- 🔥 Turbopack for fast dev
+
+## Known Limitations
+
+1. Worker bundle size: 1MB compressed
+2. D1 free tier: 5M reads, 100k writes/day
+3. Cold starts: ~50-100ms
+4. No WebSockets (use Durable Objects instead)
+
+## Troubleshooting
+
+**TypeScript errors after setup?**
+```bash
+pnpm cf-typegen  # Regenerate Cloudflare types
+```
+
+**Database not working?**
+```bash
+pnpm db:migrate:local  # Apply migrations
+```
+
+**Email not sending?**
+- Verify sender in Postmark dashboard
+- Check `EMAIL_FROM` matches verified address
+- View logs in Postmark
+
+**More help:** See [SETUP.md](./SETUP.md#troubleshooting)
+
+## Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repo
+2. Create a feature branch
+3. Test your changes
+4. Submit a PR
+
+## License
+
+MIT License
+
+## Support
+
+- 📖 [Setup Guide](./SETUP.md)
+- 📚 [Development Docs](./CLAUDE.md)
+- 💬 [GitHub Issues](https://github.com/GeorgeStrakhov/next-cloudflare-starter/issues)
+- 🌐 [Cloudflare Community](https://community.cloudflare.com/)
+
+## Acknowledgments
+
+Built with amazing open source tools:
+- [Next.js](https://nextjs.org/)
+- [OpenNext.js](https://opennext.js.org/)
+- [Cloudflare Workers](https://workers.cloudflare.com/)
+- [Better Auth](https://better-auth.com/)
+- [Drizzle ORM](https://orm.drizzle.team/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+**🚀 Ready to build? [Start with the setup guide →](./SETUP.md)**

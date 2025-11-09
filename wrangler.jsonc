@@ -1,0 +1,154 @@
+/**
+ * Wrangler Configuration for Cloudflare Workers
+ *
+ * This configuration uses a three-environment setup:
+ * - LOCAL: Your development machine (pnpm dev)
+ * - STAGING: Testing environment before production
+ * - PRODUCTION: Live production environment
+ *
+ * How to customize for your project:
+ * 1. Replace "my-app" with your project name throughout this file
+ * 2. Update domain routes with your actual domains
+ * 3. Create D1 databases and update database_id values
+ * 4. Set secrets using: npx wrangler secret put SECRET_NAME --env staging|production
+ *
+ * For more details: https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+
+	// ===========================================
+	// PRODUCTION ENVIRONMENT (default)
+	// ===========================================
+	"name": "my-app-production",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2025-03-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".open-next/assets"
+	},
+	"observability": {
+		"enabled": true
+	},
+
+	// Custom domain routes (update with your domains)
+	// After adding domains in Cloudflare dashboard
+	"routes": [
+		{
+			"pattern": "your-domain.com",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.your-domain.com",
+			"custom_domain": true
+		}
+	],
+
+	// D1 Database binding for production
+	// Create with: npx wrangler d1 create my-app-db
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "my-app-db",
+			"database_id": "YOUR_PRODUCTION_DATABASE_ID",
+			"migrations_dir": "drizzle"
+		}
+	],
+
+	// Environment variables (non-sensitive values only)
+	// Use wrangler secrets for sensitive values (see below)
+	"vars": {
+		"BETTER_AUTH_URL": "https://your-domain.com",
+		"NEXT_PUBLIC_APP_URL": "https://your-domain.com",
+		"NEXT_PUBLIC_APP_ENV": "production",
+		"NEXT_PUBLIC_APP_NAME": "My App",
+		"NEXT_PUBLIC_APP_DESCRIPTION": "My awesome application"
+	},
+
+	// ===========================================
+	// STAGING ENVIRONMENT
+	// ===========================================
+	"env": {
+		"staging": {
+			"name": "my-app-staging",
+
+			// Staging domain (e.g., staging.your-domain.com or alpha.your-domain.com)
+			"routes": [
+				{
+					"pattern": "staging.your-domain.com",
+					"custom_domain": true
+				}
+			],
+
+			// D1 Database binding for staging
+			// Create with: npx wrangler d1 create my-app-db-staging
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "my-app-db-staging",
+					"database_id": "YOUR_STAGING_DATABASE_ID",
+					"migrations_dir": "drizzle"
+				}
+			],
+
+			// Staging environment variables
+			"vars": {
+				"BETTER_AUTH_URL": "https://staging.your-domain.com",
+				"NEXT_PUBLIC_APP_URL": "https://staging.your-domain.com",
+				"NEXT_PUBLIC_APP_ENV": "staging",
+				"NEXT_PUBLIC_APP_NAME": "My App",
+				"NEXT_PUBLIC_APP_DESCRIPTION": "My awesome application"
+			}
+		}
+	}
+
+	// ===========================================
+	// SECRETS (sensitive values)
+	// ===========================================
+	// 🎯 RECOMMENDED: Use GitHub Actions (automated CI/CD)
+	//
+	// This starter is designed for GitHub Actions deployment.
+	// Set secrets in: GitHub Repo → Settings → Secrets and variables → Actions
+	//
+	// Required secrets:
+	//   - CLOUDFLARE_API_TOKEN
+	//   - CLOUDFLARE_ACCOUNT_ID
+	//   - BETTER_AUTH_SECRET_STAGING
+	//   - BETTER_AUTH_SECRET_PRODUCTION
+	//   - POSTMARK_API_KEY
+	//   - EMAIL_FROM
+	//
+	// See SETUP.md for complete GitHub Actions configuration.
+	//
+	// ⚙️ ALTERNATIVE: Manual deployment (advanced users)
+	//
+	// If deploying manually without CI/CD:
+	//   npx wrangler secret put BETTER_AUTH_SECRET --env staging
+	//   npx wrangler secret put POSTMARK_API_KEY --env staging
+	//   npx wrangler secret put EMAIL_FROM --env staging
+
+	// ===========================================
+	// ADDITIONAL CONFIGURATION OPTIONS
+	// ===========================================
+
+	/**
+	 * Smart Placement (optional - optimize for latency)
+	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/
+	 */
+	// "placement": { "mode": "smart" }
+
+	/**
+	 * Additional Bindings (optional)
+	 * - KV: Key-value storage
+	 * - R2: Object storage
+	 * - Durable Objects: Stateful objects
+	 * - Queue: Message queues
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 */
+	// "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }]
+	// "r2_buckets": [{ "binding": "MY_BUCKET", "bucket_name": "..." }]
+}

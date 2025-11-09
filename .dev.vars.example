@@ -1,0 +1,63 @@
+# Local Development Environment Variables
+# Copy this file to .dev.vars and fill in your values
+# .dev.vars is gitignored and will not be committed
+#
+# Note: D1 database is accessed via Cloudflare bindings (env.DB)
+# No DATABASE_URL needed for D1
+
+# ===========================================
+# Better Auth Configuration (Required)
+# ===========================================
+# Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-secret-key-here
+
+# Base URL for auth callbacks (usually localhost:3000 for local dev)
+BETTER_AUTH_URL=http://localhost:3000
+
+# ===========================================
+# Email Configuration (Required for Magic Link)
+# ===========================================
+# Postmark API key for sending emails
+# Get from: https://postmarkapp.com/
+# OPTIONAL for local development (emails will be logged to console)
+# REQUIRED for staging and production
+POSTMARK_API_KEY=your-postmark-api-key
+
+# Email address for sending AND receiving (must be verified in Postmark)
+# This email will be used for both sending emails and as the support contact
+EMAIL_FROM=hello@your-domain.com
+
+# ===========================================
+# R2 Storage Configuration (Required)
+# ===========================================
+# Cloudflare R2 S3-compatible object storage
+# Endpoint format: https://<account-id>.r2.cloudflarestorage.com
+S3_ENDPOINT_URL=https://your-account-id.r2.cloudflarestorage.com
+
+# R2 Region (usually weur for West Europe)
+S3_REGION=weur
+
+# R2 API credentials (get from Cloudflare dashboard → R2 → Manage R2 API Tokens)
+S3_ACCESS_ID_KEY=your-r2-access-key-id
+S3_SECRET_ACCESS_KEY=your-r2-secret-access-key
+
+# R2 bucket name (created during setup)
+S3_BUCKET_NAME=my-app-storage
+
+# Public CDN URL for serving files (custom domain connected to R2 bucket)
+S3_PUBLIC_ENDPOINT=https://cdn.your-domain.com
+
+# ===========================================
+# Replicate AI Configuration (Optional)
+# ===========================================
+# Replicate API for AI image generation and manipulation
+# Get from: https://replicate.com/account/api-tokens
+REPLICATE_API_KEY=your-replicate-api-key
+
+# ===========================================
+# OpenRouter LLM Configuration (Optional)
+# ===========================================
+# OpenRouter API for LLM text generation (GPT-4, Gemini, Claude, etc.)
+# Get from: https://openrouter.ai/keys
+# Used by the AI chatbot component
+OPENROUTER_API_KEY=your-openrouter-api-key
