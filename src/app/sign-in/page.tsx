@@ -1,7 +1,23 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { MagicLinkForm } from "@/components/auth/magic-link-form";
 import { appConfig } from "@/lib/config";
+import { createAuth } from "@/lib/auth";
 
-export default function SignInPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function SignInPage() {
+  // Check if user is already signed in
+  const auth = await createAuth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to dashboard if already authenticated
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
     <MagicLinkForm
       heading="Sign in"
