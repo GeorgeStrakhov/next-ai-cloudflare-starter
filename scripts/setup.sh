@@ -122,9 +122,13 @@ fi
 
 # Check wrangler login status
 print_info "Checking Cloudflare authentication..."
-if npx wrangler whoami &> /dev/null; then
-    CLOUDFLARE_USER=$(npx wrangler whoami 2>&1 | grep "logged in" || echo "")
-    if [ -n "$CLOUDFLARE_USER" ]; then
+
+# Run whoami command, allowing npx install prompt to show
+WHOAMI_OUTPUT=$(npx wrangler whoami 2>&1)
+WHOAMI_EXIT=$?
+
+if [ $WHOAMI_EXIT -eq 0 ]; then
+    if echo "$WHOAMI_OUTPUT" | grep -q "logged in"; then
         print_success "Logged in to Cloudflare"
     else
         print_warning "Not logged in to Cloudflare"
@@ -137,6 +141,7 @@ if npx wrangler whoami &> /dev/null; then
     fi
 else
     print_error "Unable to check Cloudflare login status"
+    echo "$WHOAMI_OUTPUT"
     exit 1
 fi
 
