@@ -803,6 +803,22 @@ echo ""
 sleep 1
 
 # =============================================================================
+# GENERATE CLOUDFLARE TYPES
+# =============================================================================
+
+print_header "🔧 Generating Cloudflare TypeScript Types"
+
+print_info "Generating TypeScript types for Cloudflare bindings..."
+if pnpm cf-typegen; then
+    print_success "TypeScript types generated (includes R2_BUCKET, DB, ASSETS)"
+else
+    print_warning "Type generation failed - you may need to run: pnpm cf-typegen"
+fi
+
+echo ""
+sleep 1
+
+# =============================================================================
 # FAVICON GENERATION
 # =============================================================================
 
