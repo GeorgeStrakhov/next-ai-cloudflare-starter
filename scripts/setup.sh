@@ -222,6 +222,8 @@ PROJECT_NAME_LOWER="$PROJECT_NAME"  # Already lowercase from validation
 
 prompt "Production domain (e.g., myapp.com)" "your-domain.com" PROD_DOMAIN
 prompt "Staging domain (e.g., staging.myapp.com)" "staging.$PROD_DOMAIN" STAGING_DOMAIN
+prompt "CDN custom domain for file storage (e.g., cdn.myapp.com)" "cdn.$PROD_DOMAIN" CDN_DOMAIN
+STAGING_CDN_DOMAIN="cdn-staging.${PROD_DOMAIN}"
 prompt "App display name" "My App" APP_NAME
 prompt "App description" "My awesome application" APP_DESCRIPTION
 prompt "Email address (for sending and support)" "hello@$PROD_DOMAIN" EMAIL_FROM
@@ -231,6 +233,7 @@ print_info "Configuration summary:"
 echo "  Project: $PROJECT_NAME"
 echo "  Production: $PROD_DOMAIN"
 echo "  Staging: $STAGING_DOMAIN"
+echo "  CDN: $CDN_DOMAIN"
 echo "  App name: $APP_NAME"
 echo ""
 
@@ -276,12 +279,6 @@ if [ -z "$CF_API_TOKEN" ]; then
     print_error "Cloudflare API Token is required"
     exit 1
 fi
-
-echo ""
-
-# CDN Domain for R2
-prompt "CDN custom domain for file storage (e.g., cdn.${PROD_DOMAIN})" "cdn.${PROD_DOMAIN}" CDN_DOMAIN
-STAGING_CDN_DOMAIN="cdn-staging.${PROD_DOMAIN}"
 
 echo ""
 
@@ -1119,38 +1116,36 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     REPO_OWNER="$USERNAME"
 
                     if [ -n "$ORGS" ]; then
-                        # User has organizations - show selection menu
+                        # Build options array for select menu
+                        OPTIONS=("Personal account: $USERNAME")
+
+                        while IFS= read -r org; do
+                            if [ -n "$org" ]; then
+                                OPTIONS+=("Organization: $org")
+                            fi
+                        done <<< "$ORGS"
+
+                        # Use bash select for better UX
                         echo ""
                         print_info "Select where to create the repository:"
                         echo ""
-                        echo "  1) Personal account: $USERNAME"
 
-                        # Build array of orgs and display menu
-                        COUNTER=2
-                        ORG_ARRAY=()
-                        for org in $ORGS; do
-                            ORG_ARRAY+=("$org")
-                            echo "  $COUNTER) Organization: $org"
-                            ((COUNTER++))
-                        done
-
-                        echo ""
-                        echo -en "${YELLOW}?${NC} Select option ${BLUE}[1]${NC}: "
-                        read REPO_OWNER_CHOICE
-                        REPO_OWNER_CHOICE=${REPO_OWNER_CHOICE:-1}
-
-                        # Validate input
-                        if [[ "$REPO_OWNER_CHOICE" =~ ^[0-9]+$ ]] && [ "$REPO_OWNER_CHOICE" -ge 1 ] && [ "$REPO_OWNER_CHOICE" -lt "$COUNTER" ]; then
-                            if [ "$REPO_OWNER_CHOICE" -eq 1 ]; then
-                                REPO_OWNER="$USERNAME"
+                        PS3="${YELLOW}?${NC} Enter selection number: "
+                        select opt in "${OPTIONS[@]}"; do
+                            if [ -n "$opt" ]; then
+                                if [ "$REPLY" -eq 1 ]; then
+                                    REPO_OWNER="$USERNAME"
+                                    print_success "Selected: Personal account ($USERNAME)"
+                                else
+                                    # Extract org name from "Organization: orgname" format
+                                    REPO_OWNER=$(echo "$opt" | sed 's/^Organization: //')
+                                    print_success "Selected: Organization ($REPO_OWNER)"
+                                fi
+                                break
                             else
-                                REPO_OWNER="${ORG_ARRAY[$((REPO_OWNER_CHOICE-2))]}"
+                                print_error "Invalid selection. Please try again."
                             fi
-                            print_success "Will create repository in: $REPO_OWNER"
-                        else
-                            print_error "Invalid selection. Using personal account: $USERNAME"
-                            REPO_OWNER="$USERNAME"
-                        fi
+                        done
                     else
                         print_success "Will create repository in personal account: $USERNAME"
                     fi
