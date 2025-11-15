@@ -803,6 +803,24 @@ echo ""
 sleep 1
 
 # =============================================================================
+# INSTALL DEPENDENCIES
+# =============================================================================
+
+print_header "📦 Installing Dependencies"
+
+print_info "Installing npm dependencies..."
+if pnpm install; then
+    print_success "Dependencies installed"
+else
+    print_error "Failed to install dependencies"
+    print_warning "You'll need to run: pnpm install"
+    exit 1
+fi
+
+echo ""
+sleep 1
+
+# =============================================================================
 # GENERATE CLOUDFLARE TYPES
 # =============================================================================
 
@@ -938,20 +956,10 @@ echo ""
 sleep 1
 
 # =============================================================================
-# INSTALL DEPENDENCIES AND SETUP DATABASE
+# SETUP DATABASE
 # =============================================================================
 
-print_header "🔧 Installing Dependencies and Setting Up Database"
-
-print_info "Installing npm dependencies..."
-if pnpm install; then
-    print_success "Dependencies installed"
-else
-    print_error "Failed to install dependencies"
-    print_warning "You'll need to run: pnpm install"
-fi
-
-echo ""
+print_header "🗄️  Setting Up Database"
 
 print_info "Generating database migrations from schema..."
 if pnpm db:generate; then
@@ -1094,9 +1102,65 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     REPO_VISIBILITY="public"
                 fi
 
+                echo ""
+
+                # Get authenticated username
+                USERNAME=$(gh api user --jq '.login' 2>/dev/null)
+
+                if [ -z "$USERNAME" ]; then
+                    print_error "Failed to get GitHub username"
+                    print_info "You can create the repository manually"
+                else
+                    # Get list of organizations
+                    print_info "Checking your GitHub organizations..."
+                    ORGS=$(gh org list --limit 100 2>/dev/null | awk '{print $1}')
+
+                    # Determine repository owner
+                    REPO_OWNER="$USERNAME"
+
+                    if [ -n "$ORGS" ]; then
+                        # User has organizations - show selection menu
+                        echo ""
+                        print_info "Select where to create the repository:"
+                        echo ""
+                        echo "  1) Personal account: $USERNAME"
+
+                        # Build array of orgs and display menu
+                        COUNTER=2
+                        ORG_ARRAY=()
+                        for org in $ORGS; do
+                            ORG_ARRAY+=("$org")
+                            echo "  $COUNTER) Organization: $org"
+                            ((COUNTER++))
+                        done
+
+                        echo ""
+                        echo -en "${YELLOW}?${NC} Select option ${BLUE}[1]${NC}: "
+                        read REPO_OWNER_CHOICE
+                        REPO_OWNER_CHOICE=${REPO_OWNER_CHOICE:-1}
+
+                        # Validate input
+                        if [[ "$REPO_OWNER_CHOICE" =~ ^[0-9]+$ ]] && [ "$REPO_OWNER_CHOICE" -ge 1 ] && [ "$REPO_OWNER_CHOICE" -lt "$COUNTER" ]; then
+                            if [ "$REPO_OWNER_CHOICE" -eq 1 ]; then
+                                REPO_OWNER="$USERNAME"
+                            else
+                                REPO_OWNER="${ORG_ARRAY[$((REPO_OWNER_CHOICE-2))]}"
+                            fi
+                            print_success "Will create repository in: $REPO_OWNER"
+                        else
+                            print_error "Invalid selection. Using personal account: $USERNAME"
+                            REPO_OWNER="$USERNAME"
+                        fi
+                    else
+                        print_success "Will create repository in personal account: $USERNAME"
+                    fi
+
+                    echo ""
+                fi
+
                 # Create GitHub repository
                 print_info "Creating GitHub repository..."
-                if gh repo create "${PROJECT_NAME_LOWER}" --${REPO_VISIBILITY} --source=. --remote=origin --description="${APP_DESCRIPTION}"; then
+                if gh repo create "${REPO_OWNER}/${PROJECT_NAME_LOWER}" --${REPO_VISIBILITY} --source=. --remote=origin --description="${APP_DESCRIPTION}"; then
                     print_success "GitHub repository created"
 
                     # Set GitHub secrets first (before any deployments)
@@ -1191,12 +1255,13 @@ if [ "$GIT_INITIALIZED" = true ]; then
         echo -e "${YELLOW}1. Create a new GitHub repository${NC}"
         echo "   • Go to: https://github.com/new"
         echo "   • Name: ${PROJECT_NAME_LOWER}"
+        echo "   • Owner: Choose your personal account or an organization"
         echo "   • Visibility: Private (recommended)"
         echo "   • Do NOT initialize with README, .gitignore, or license"
         echo ""
 
         echo -e "${YELLOW}2. Push your code to GitHub${NC}"
-        echo -e "   ${BLUE}git remote add origin git@github.com:YOUR_USERNAME/${PROJECT_NAME_LOWER}.git${NC}"
+        echo -e "   ${BLUE}git remote add origin git@github.com:YOUR_USERNAME_OR_ORG/${PROJECT_NAME_LOWER}.git${NC}"
         echo -e "   ${BLUE}git push -u origin main${NC}"
         echo -e "   ${BLUE}git push -u origin stage${NC}  # Optional: triggers staging deployment"
         echo -e "   ${BLUE}git push -u origin prod${NC}   # Optional: triggers production deployment"
