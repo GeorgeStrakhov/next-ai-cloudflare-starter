@@ -343,13 +343,29 @@ print_header "🪣 Creating R2 Storage Buckets"
 
 # Create production R2 bucket
 print_info "Creating production R2 bucket..."
-npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-storage" >/dev/null 2>&1
-print_success "Production R2 bucket created: ${PROJECT_NAME_LOWER}-storage"
+BUCKET_CREATE_OUTPUT=$(npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-storage" 2>&1 || true)
+if echo "$BUCKET_CREATE_OUTPUT" | grep -q "Created bucket"; then
+    print_success "Production R2 bucket created: ${PROJECT_NAME_LOWER}-storage"
+elif echo "$BUCKET_CREATE_OUTPUT" | grep -q "already exists"; then
+    print_warning "Production R2 bucket already exists: ${PROJECT_NAME_LOWER}-storage"
+else
+    print_error "Failed to create production R2 bucket"
+    echo "$BUCKET_CREATE_OUTPUT"
+    exit 1
+fi
 
 # Create staging R2 bucket
 print_info "Creating staging R2 bucket..."
-npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-storage-staging" >/dev/null 2>&1
-print_success "Staging R2 bucket created: ${PROJECT_NAME_LOWER}-storage-staging"
+BUCKET_CREATE_OUTPUT=$(npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-storage-staging" 2>&1 || true)
+if echo "$BUCKET_CREATE_OUTPUT" | grep -q "Created bucket"; then
+    print_success "Staging R2 bucket created: ${PROJECT_NAME_LOWER}-storage-staging"
+elif echo "$BUCKET_CREATE_OUTPUT" | grep -q "already exists"; then
+    print_warning "Staging R2 bucket already exists: ${PROJECT_NAME_LOWER}-storage-staging"
+else
+    print_error "Failed to create staging R2 bucket"
+    echo "$BUCKET_CREATE_OUTPUT"
+    exit 1
+fi
 
 # Get Cloudflare Account ID
 print_info "Getting Cloudflare account ID..."
