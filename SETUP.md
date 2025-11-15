@@ -28,6 +28,7 @@ Before you begin, ensure you have:
 4. **Postmark account** for email (free tier available)
 5. **Replicate account** for AI image generation (optional)
 6. **Git** for version control
+7. **gum** for enhanced setup UI (optional) - `brew install gum`
 
 ---
 
@@ -38,6 +39,8 @@ Before you begin, ensure you have:
 > bash scripts/setup.sh
 > ```
 > The script will guide you through project configuration, create D1 databases, and update all config files automatically.
+>
+> **💡 Tip:** Install `gum` (`brew install gum`) for a beautiful interactive UI with keyboard navigation and live filtering!
 
 ### Manual Setup
 

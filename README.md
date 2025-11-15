@@ -29,6 +29,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 - Replicate account (optional, for AI features)
 - OpenRouter account (optional, for LLM chatbot)
 - GitHub CLI (optional, for automated setup)
+- gum (optional, for enhanced setup UI) - `brew install gum`
 
 ### Installation
 
@@ -37,6 +38,11 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 ```bash
 git clone https://github.com/GeorgeStrakhov/next-ai-cloudflare-starter
 cd next-ai-cloudflare-starter
+
+# Optional: Install gum for beautiful interactive UI
+brew install gum
+
+# Run setup script
 bash scripts/setup.sh
 ```
 

@@ -1,66 +1,11 @@
 #!/bin/bash
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Helper functions
-print_header() {
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${BLUE}  $1${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-}
-
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠${NC}  $1"
-}
-
-print_info() {
-    echo -e "${BLUE}ℹ${NC}  $1"
-}
-
-prompt() {
-    local prompt_text="$1"
-    local default_value="$2"
-    local result_var="$3"
-
-    if [ -n "$default_value" ]; then
-        echo -en "${YELLOW}?${NC} $prompt_text ${BLUE}[$default_value]${NC}: "
-    else
-        echo -en "${YELLOW}?${NC} $prompt_text: "
-    fi
-
-    read user_input
-
-    if [ -z "$user_input" ] && [ -n "$default_value" ]; then
-        # Use printf %q to safely escape the value
-        printf -v "$result_var" '%s' "$default_value"
-    else
-        # Use printf %q to safely escape the value
-        printf -v "$result_var" '%s' "$user_input"
-    fi
-}
-
-confirm() {
-    local prompt_text="$1"
-    echo -en "${YELLOW}?${NC} $prompt_text ${BLUE}[y/N]${NC}: "
-    read -r response
-    [[ "$response" =~ ^[Yy]$ ]]
-}
+# Source UI library for consistent UI components
+source "$SCRIPT_DIR/ui-lib.sh"
 
 # =============================================================================
 # WELCOME
@@ -1116,7 +1061,7 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     REPO_OWNER="$USERNAME"
 
                     if [ -n "$ORGS" ]; then
-                        # Build options array for select menu
+                        # Build options array for choose menu
                         OPTIONS=("Personal account: $USERNAME")
 
                         while IFS= read -r org; do
@@ -1125,27 +1070,17 @@ if [ "$GIT_INITIALIZED" = true ]; then
                             fi
                         done <<< "$ORGS"
 
-                        # Use bash select for better UX
-                        echo ""
-                        print_info "Select where to create the repository:"
-                        echo ""
+                        # Use choose function (gum or bash select)
+                        SELECTED=$(choose "Select where to create the repository:" "${OPTIONS[@]}")
 
-                        PS3="${YELLOW}?${NC} Enter selection number: "
-                        select opt in "${OPTIONS[@]}"; do
-                            if [ -n "$opt" ]; then
-                                if [ "$REPLY" -eq 1 ]; then
-                                    REPO_OWNER="$USERNAME"
-                                    print_success "Selected: Personal account ($USERNAME)"
-                                else
-                                    # Extract org name from "Organization: orgname" format
-                                    REPO_OWNER=$(echo "$opt" | sed 's/^Organization: //')
-                                    print_success "Selected: Organization ($REPO_OWNER)"
-                                fi
-                                break
-                            else
-                                print_error "Invalid selection. Please try again."
-                            fi
-                        done
+                        if [[ "$SELECTED" == "Personal account:"* ]]; then
+                            REPO_OWNER="$USERNAME"
+                            print_success "Selected: Personal account ($USERNAME)"
+                        else
+                            # Extract org name from "Organization: orgname" format
+                            REPO_OWNER=$(echo "$SELECTED" | sed 's/^Organization: //')
+                            print_success "Selected: Organization ($REPO_OWNER)"
+                        fi
                     else
                         print_success "Will create repository in personal account: $USERNAME"
                     fi
