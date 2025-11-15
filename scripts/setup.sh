@@ -307,30 +307,80 @@ sleep 2
 print_header "🗄️  Creating Cloudflare D1 Databases"
 
 print_info "Creating production database..."
-PROD_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db" 2>&1)
-# Extract database ID - handle both formats: database_id = "..." and "database_id": "..."
-PROD_DB_ID=$(echo "$PROD_DB_OUTPUT" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+PROD_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db" 2>&1 || true)
 
-if [ -z "$PROD_DB_ID" ]; then
-    print_error "Failed to create production database or extract database ID"
-    echo "$PROD_DB_OUTPUT"
-    exit 1
+if echo "$PROD_DB_OUTPUT" | grep -q "already exists"; then
+    print_warning "Database '${PROJECT_NAME_LOWER}-db' already exists"
+
+    # Try to get existing database ID
+    EXISTING_DB=$(npx wrangler d1 list 2>&1 | grep "${PROJECT_NAME_LOWER}-db" | head -1)
+    PROD_DB_ID=$(echo "$EXISTING_DB" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+
+    if [ -n "$PROD_DB_ID" ]; then
+        print_info "Found existing database ID: $PROD_DB_ID"
+        if confirm "Use existing production database?"; then
+            print_success "Using existing production database: $PROD_DB_ID"
+        else
+            print_error "Cannot proceed without a production database"
+            print_info "Please either:"
+            echo "  1. Delete the existing database: npx wrangler d1 delete ${PROJECT_NAME_LOWER}-db"
+            echo "  2. Choose a different project name when running this script"
+            exit 1
+        fi
+    else
+        print_error "Could not find existing database ID"
+        exit 1
+    fi
+else
+    # Extract database ID from creation output
+    PROD_DB_ID=$(echo "$PROD_DB_OUTPUT" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+
+    if [ -z "$PROD_DB_ID" ]; then
+        print_error "Failed to create production database or extract database ID"
+        echo "$PROD_DB_OUTPUT"
+        exit 1
+    fi
+
+    print_success "Production database created: $PROD_DB_ID"
 fi
-
-print_success "Production database created: $PROD_DB_ID"
 
 print_info "Creating staging database..."
-STAGING_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db-staging" 2>&1)
-# Extract database ID - handle both formats: database_id = "..." and "database_id": "..."
-STAGING_DB_ID=$(echo "$STAGING_DB_OUTPUT" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+STAGING_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db-staging" 2>&1 || true)
 
-if [ -z "$STAGING_DB_ID" ]; then
-    print_error "Failed to create staging database or extract database ID"
-    echo "$STAGING_DB_OUTPUT"
-    exit 1
+if echo "$STAGING_DB_OUTPUT" | grep -q "already exists"; then
+    print_warning "Database '${PROJECT_NAME_LOWER}-db-staging' already exists"
+
+    # Try to get existing database ID
+    EXISTING_DB=$(npx wrangler d1 list 2>&1 | grep "${PROJECT_NAME_LOWER}-db-staging" | head -1)
+    STAGING_DB_ID=$(echo "$EXISTING_DB" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+
+    if [ -n "$STAGING_DB_ID" ]; then
+        print_info "Found existing database ID: $STAGING_DB_ID"
+        if confirm "Use existing staging database?"; then
+            print_success "Using existing staging database: $STAGING_DB_ID"
+        else
+            print_error "Cannot proceed without a staging database"
+            print_info "Please either:"
+            echo "  1. Delete the existing database: npx wrangler d1 delete ${PROJECT_NAME_LOWER}-db-staging"
+            echo "  2. Choose a different project name when running this script"
+            exit 1
+        fi
+    else
+        print_error "Could not find existing database ID"
+        exit 1
+    fi
+else
+    # Extract database ID from creation output
+    STAGING_DB_ID=$(echo "$STAGING_DB_OUTPUT" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+
+    if [ -z "$STAGING_DB_ID" ]; then
+        print_error "Failed to create staging database or extract database ID"
+        echo "$STAGING_DB_OUTPUT"
+        exit 1
+    fi
+
+    print_success "Staging database created: $STAGING_DB_ID"
 fi
-
-print_success "Staging database created: $STAGING_DB_ID"
 
 echo ""
 sleep 1
@@ -347,7 +397,16 @@ BUCKET_CREATE_OUTPUT=$(npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-stor
 if echo "$BUCKET_CREATE_OUTPUT" | grep -q "Created bucket"; then
     print_success "Production R2 bucket created: ${PROJECT_NAME_LOWER}-storage"
 elif echo "$BUCKET_CREATE_OUTPUT" | grep -q "already exists"; then
-    print_warning "Production R2 bucket already exists: ${PROJECT_NAME_LOWER}-storage"
+    print_warning "R2 bucket '${PROJECT_NAME_LOWER}-storage' already exists"
+    if confirm "Use existing production R2 bucket?"; then
+        print_success "Using existing production R2 bucket: ${PROJECT_NAME_LOWER}-storage"
+    else
+        print_error "Cannot proceed without a production R2 bucket"
+        print_info "Please either:"
+        echo "  1. Delete the existing bucket: npx wrangler r2 bucket delete ${PROJECT_NAME_LOWER}-storage"
+        echo "  2. Choose a different project name when running this script"
+        exit 1
+    fi
 else
     print_error "Failed to create production R2 bucket"
     echo "$BUCKET_CREATE_OUTPUT"
@@ -360,7 +419,16 @@ BUCKET_CREATE_OUTPUT=$(npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-stor
 if echo "$BUCKET_CREATE_OUTPUT" | grep -q "Created bucket"; then
     print_success "Staging R2 bucket created: ${PROJECT_NAME_LOWER}-storage-staging"
 elif echo "$BUCKET_CREATE_OUTPUT" | grep -q "already exists"; then
-    print_warning "Staging R2 bucket already exists: ${PROJECT_NAME_LOWER}-storage-staging"
+    print_warning "R2 bucket '${PROJECT_NAME_LOWER}-storage-staging' already exists"
+    if confirm "Use existing staging R2 bucket?"; then
+        print_success "Using existing staging R2 bucket: ${PROJECT_NAME_LOWER}-storage-staging"
+    else
+        print_error "Cannot proceed without a staging R2 bucket"
+        print_info "Please either:"
+        echo "  1. Delete the existing bucket: npx wrangler r2 bucket delete ${PROJECT_NAME_LOWER}-storage-staging"
+        echo "  2. Choose a different project name when running this script"
+        exit 1
+    fi
 else
     print_error "Failed to create staging R2 bucket"
     echo "$BUCKET_CREATE_OUTPUT"
