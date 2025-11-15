@@ -166,22 +166,48 @@ done
 PROJECT_NAME_LOWER="$PROJECT_NAME"  # Already lowercase from validation
 
 prompt "Production domain (e.g., myapp.com)" "your-domain.com" PROD_DOMAIN
-prompt "Staging domain (e.g., staging.myapp.com)" "staging.$PROD_DOMAIN" STAGING_DOMAIN
-prompt "CDN custom domain for file storage (e.g., cdn.myapp.com)" "cdn.$PROD_DOMAIN" CDN_DOMAIN
+
+# Use entered domain for smart defaults
+prompt "Staging domain" "staging.$PROD_DOMAIN" STAGING_DOMAIN
+prompt "CDN custom domain for file storage" "cdn.$PROD_DOMAIN" CDN_DOMAIN
 STAGING_CDN_DOMAIN="cdn-staging.${PROD_DOMAIN}"
-prompt "App display name" "My App" APP_NAME
+
+# Convert project name to title case for app name default
+APP_NAME_DEFAULT=$(echo "$PROJECT_NAME" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
+prompt "App display name" "$APP_NAME_DEFAULT" APP_NAME
 prompt "App description" "My awesome application" APP_DESCRIPTION
 prompt "Email address (for sending and support)" "hello@$PROD_DOMAIN" EMAIL_FROM
 
 echo ""
-print_info "Configuration summary:"
-echo "  Project: $PROJECT_NAME"
-echo "  App name: $APP_NAME"
-echo "  Description: $APP_DESCRIPTION"
-echo "  Production: $PROD_DOMAIN"
-echo "  Staging: $STAGING_DOMAIN"
-echo "  CDN: $CDN_DOMAIN"
-echo "  Email: $EMAIL_FROM"
+if [ "$HAS_GUM" = true ]; then
+    gum style \
+        --border double \
+        --border-foreground 212 \
+        --padding "1 2" \
+        --width 70 \
+        --bold \
+        "Configuration Summary" \
+        "" \
+        "Project: $PROJECT_NAME" \
+        "App Name: $APP_NAME" \
+        "Description: $APP_DESCRIPTION" \
+        "" \
+        "🌐 Domains:" \
+        "  Production: https://$PROD_DOMAIN" \
+        "  Staging: https://$STAGING_DOMAIN" \
+        "  CDN: https://$CDN_DOMAIN" \
+        "" \
+        "📧 Email: $EMAIL_FROM"
+else
+    print_info "Configuration summary:"
+    echo "  Project: $PROJECT_NAME"
+    echo "  App name: $APP_NAME"
+    echo "  Description: $APP_DESCRIPTION"
+    echo "  Production: $PROD_DOMAIN"
+    echo "  Staging: $STAGING_DOMAIN"
+    echo "  CDN: $CDN_DOMAIN"
+    echo "  Email: $EMAIL_FROM"
+fi
 echo ""
 
 if ! confirm "Does this look correct?"; then

@@ -72,20 +72,29 @@ prompt() {
     local result_var="$3"
 
     if [ "$HAS_GUM" = true ]; then
-        # Show prompt label before input
-        gum style --foreground 117 "? $prompt_text"
+        # Show prompt with default hint
+        if [ -n "$default_value" ]; then
+            gum style --foreground 117 "? $prompt_text (default: $default_value)"
+        else
+            gum style --foreground 117 "? $prompt_text"
+        fi
 
         local result
         if [ -n "$default_value" ]; then
-            # Use placeholder for suggestions (user can type to replace)
-            result=$(gum input --placeholder "$default_value" --width 60)
-            # If empty, use default
+            # Use value for default (pre-filled, can be edited)
+            result=$(gum input --value "$default_value" --width 60)
+            # If empty after editing, use default
             if [ -z "$result" ]; then
                 result="$default_value"
             fi
         else
             result=$(gum input --placeholder "Enter value..." --width 60)
         fi
+
+        # Show what was accepted
+        gum style --foreground 212 "  ✓ $result"
+        echo ""
+
         printf -v "$result_var" '%s' "$result"
     else
         if [ -n "$default_value" ]; then
@@ -101,6 +110,9 @@ prompt() {
         else
             printf -v "$result_var" '%s' "$user_input"
         fi
+
+        # Show confirmation in non-gum mode too
+        echo -e "${GREEN}  ✓${NC} ${!result_var}"
     fi
 }
 
