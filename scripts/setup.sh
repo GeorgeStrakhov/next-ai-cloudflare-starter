@@ -176,10 +176,12 @@ prompt "Email address (for sending and support)" "hello@$PROD_DOMAIN" EMAIL_FROM
 echo ""
 print_info "Configuration summary:"
 echo "  Project: $PROJECT_NAME"
+echo "  App name: $APP_NAME"
+echo "  Description: $APP_DESCRIPTION"
 echo "  Production: $PROD_DOMAIN"
 echo "  Staging: $STAGING_DOMAIN"
 echo "  CDN: $CDN_DOMAIN"
-echo "  App name: $APP_NAME"
+echo "  Email: $EMAIL_FROM"
 echo ""
 
 if ! confirm "Does this look correct?"; then
@@ -399,25 +401,50 @@ R2_TOKEN_RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/user/t
     }]
   }')
 
-# Extract token ID and value from response
-# For R2: Access Key ID = token id, Secret Access Key = SHA-256 of token value
-TOKEN_ID=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
-TOKEN_VALUE=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
+# Check if API call was successful
+if echo "$R2_TOKEN_RESPONSE" | grep -q '"success"\s*:\s*true'; then
+    # Extract token ID and value from response
+    # For R2: Access Key ID = token id, Secret Access Key = SHA-256 of token value
+    TOKEN_ID=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+    TOKEN_VALUE=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
 
-if [ -n "$TOKEN_ID" ] && [ -n "$TOKEN_VALUE" ]; then
-    R2_ACCESS_KEY="$TOKEN_ID"
-    # Create SHA-256 hash of the token value for the secret key
-    R2_SECRET_KEY=$(echo -n "$TOKEN_VALUE" | shasum -a 256 | cut -d' ' -f1)
+    if [ -n "$TOKEN_ID" ] && [ -n "$TOKEN_VALUE" ]; then
+        R2_ACCESS_KEY="$TOKEN_ID"
+        # Create SHA-256 hash of the token value for the secret key
+        R2_SECRET_KEY=$(echo -n "$TOKEN_VALUE" | shasum -a 256 | cut -d' ' -f1)
+        print_success "R2 production API token created successfully"
+    else
+        R2_ACCESS_KEY=""
+        R2_SECRET_KEY=""
+    fi
 else
+    # API call failed - extract error message
+    ERROR_MESSAGE=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"message":"[^"]*"' | head -1 | cut -d'"' -f4)
+    ERROR_CODE=$(echo "$R2_TOKEN_RESPONSE" | grep -o '"code":[0-9]*' | head -1 | cut -d':' -f2)
+
     R2_ACCESS_KEY=""
     R2_SECRET_KEY=""
 fi
 
-if [ -n "$R2_ACCESS_KEY" ] && [ -n "$R2_SECRET_KEY" ]; then
-    print_success "R2 production API token created successfully"
-else
-    print_warning "Automatic R2 token creation requires 'API Tokens Edit' permission"
-    print_info "Create tokens manually at: https://dash.cloudflare.com/${ACCOUNT_ID}/r2/api-tokens"
+if [ -z "$R2_ACCESS_KEY" ] || [ -z "$R2_SECRET_KEY" ]; then
+    print_warning "Automatic R2 token creation failed"
+
+    if [ -n "$ERROR_MESSAGE" ]; then
+        if [ "$ERROR_CODE" = "1001" ]; then
+            print_error "Error: $ERROR_MESSAGE"
+            print_info "You've reached Cloudflare's API token limit (50 tokens max)"
+            print_info "Please delete unused tokens at: https://dash.cloudflare.com/profile/api-tokens"
+            echo ""
+            print_info "Then create R2 tokens manually at: https://dash.cloudflare.com/${ACCOUNT_ID}/r2/api-tokens"
+        else
+            print_error "Error: $ERROR_MESSAGE (code: $ERROR_CODE)"
+            print_info "Create tokens manually at: https://dash.cloudflare.com/${ACCOUNT_ID}/r2/api-tokens"
+        fi
+    else
+        print_info "Automatic creation requires 'User API Tokens - Edit' permission"
+        print_info "Create tokens manually at: https://dash.cloudflare.com/${ACCOUNT_ID}/r2/api-tokens"
+    fi
+
     echo ""
     echo "For production token:"
     echo "  • Permissions: Object Read & Write"
@@ -448,17 +475,27 @@ if [ -n "$R2_ACCESS_KEY" ] && [ -n "$R2_SECRET_KEY" ]; then
         }]
       }')
 
-    # Extract token ID and value from response
-    # For R2: Access Key ID = token id, Secret Access Key = SHA-256 of token value
-    TOKEN_ID_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
-    TOKEN_VALUE_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
+    # Check if API call was successful
+    if echo "$R2_TOKEN_RESPONSE_STAGING" | grep -q '"success"\s*:\s*true'; then
+        # Extract token ID and value from response
+        # For R2: Access Key ID = token id, Secret Access Key = SHA-256 of token value
+        TOKEN_ID_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+        TOKEN_VALUE_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
 
-    if [ -n "$TOKEN_ID_STAGING" ] && [ -n "$TOKEN_VALUE_STAGING" ]; then
-        R2_ACCESS_KEY_STAGING="$TOKEN_ID_STAGING"
-        # Create SHA-256 hash of the token value for the secret key
-        R2_SECRET_KEY_STAGING=$(echo -n "$TOKEN_VALUE_STAGING" | shasum -a 256 | cut -d' ' -f1)
-        print_success "R2 staging API token created successfully"
+        if [ -n "$TOKEN_ID_STAGING" ] && [ -n "$TOKEN_VALUE_STAGING" ]; then
+            R2_ACCESS_KEY_STAGING="$TOKEN_ID_STAGING"
+            # Create SHA-256 hash of the token value for the secret key
+            R2_SECRET_KEY_STAGING=$(echo -n "$TOKEN_VALUE_STAGING" | shasum -a 256 | cut -d' ' -f1)
+            print_success "R2 staging API token created successfully"
+        else
+            R2_ACCESS_KEY_STAGING=""
+            R2_SECRET_KEY_STAGING=""
+        fi
     else
+        # API call failed - extract error message
+        ERROR_MESSAGE_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"message":"[^"]*"' | head -1 | cut -d'"' -f4)
+        ERROR_CODE_STAGING=$(echo "$R2_TOKEN_RESPONSE_STAGING" | grep -o '"code":[0-9]*' | head -1 | cut -d':' -f2)
+
         R2_ACCESS_KEY_STAGING=""
         R2_SECRET_KEY_STAGING=""
     fi
@@ -467,6 +504,19 @@ fi
 # If automatic creation failed for staging, prompt manually
 if [ -z "$R2_ACCESS_KEY_STAGING" ] || [ -z "$R2_SECRET_KEY_STAGING" ]; then
     echo ""
+
+    if [ -n "$ERROR_MESSAGE_STAGING" ]; then
+        print_warning "Automatic R2 token creation failed for staging"
+        if [ "$ERROR_CODE_STAGING" = "1001" ]; then
+            print_error "Error: $ERROR_MESSAGE_STAGING"
+            print_info "You've reached Cloudflare's API token limit (50 tokens max)"
+            print_info "Please delete unused tokens at: https://dash.cloudflare.com/profile/api-tokens"
+        else
+            print_error "Error: $ERROR_MESSAGE_STAGING (code: $ERROR_CODE_STAGING)"
+        fi
+        echo ""
+    fi
+
     print_info "For staging token:"
     echo "  • Permissions: Object Read & Write"
     echo "  • Bucket: ${PROJECT_NAME_LOWER}-storage-staging"
