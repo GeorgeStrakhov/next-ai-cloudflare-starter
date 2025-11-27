@@ -69,7 +69,7 @@ fi
 print_info "Checking Cloudflare authentication..."
 
 # Run whoami command, allowing npx install prompt to show
-WHOAMI_OUTPUT=$(npx wrangler whoami 2>&1)
+WHOAMI_OUTPUT=$(npx -y wrangler whoami 2>&1)
 WHOAMI_EXIT=$?
 
 if [ $WHOAMI_EXIT -eq 0 ]; then
@@ -78,7 +78,7 @@ if [ $WHOAMI_EXIT -eq 0 ]; then
     else
         print_warning "Not logged in to Cloudflare"
         if confirm "Would you like to login now?"; then
-            npx wrangler login
+            npx -y wrangler login
         else
             print_error "Cloudflare login required for database creation. Run: npx wrangler login"
             exit 1
