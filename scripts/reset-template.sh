@@ -136,6 +136,7 @@ MODIFIED_FILES=(
     "src/app/(legal)/privacy/page.mdx"
     "src/app/(legal)/terms/page.mdx"
     "public/site.webmanifest"
+    "cloudflare-env.d.ts"
 )
 
 for file in "${MODIFIED_FILES[@]}"; do
