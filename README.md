@@ -4,7 +4,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 
 ## Features
 
-- ✨ **Next.js 15.4** with App Router and React 19
+- ✨ **Next.js 15.4** (security patched) with App Router and React 19
 - ⚡ **Cloudflare Workers** deployment via OpenNext.js
 - 🗄️ **Cloudflare D1** serverless SQLite database
 - 🔍 **Drizzle ORM** for type-safe database access
@@ -17,6 +17,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 - 🧠 **OpenRouter LLM** integration with AI SDK (chatbot with GPT, Gemini, Claude)
 - 🚀 **GitHub Actions** CI/CD pipeline
 - 🌍 **Three-environment setup**: Local → Staging → Production
+- 📜 **Legal pages** (Privacy Policy & Terms of Service) with MDX support
 
 ## Quick Start
 
@@ -48,12 +49,13 @@ bash scripts/setup.sh
 
 **What the setup script does:**
 
-1. **Collects configuration** - Project name, domains, API keys
+1. **Collects configuration** - Project name, domains, API keys, legal company name
 2. **Creates Cloudflare resources** - D1 databases (staging/prod), R2 buckets, API tokens
 3. **⚠️ Wipes .git directory** - Removes template history, creates fresh git repo for your project
 4. **Updates all config files** - package.json, wrangler.jsonc, environment files
-5. **Installs dependencies** - Runs pnpm install and database migrations
-6. **GitHub setup** (if GitHub CLI installed):
+5. **Configures legal pages** - Privacy Policy & Terms of Service with your company info
+6. **Installs dependencies** - Runs pnpm install and database migrations
+7. **GitHub setup** (if GitHub CLI installed):
    - Creates new GitHub repository
    - Pushes all branches (main, stage, prod)
    - Sets all 12 GitHub secrets for CI/CD
@@ -90,7 +92,7 @@ Visit http://localhost:3000
 
 | Category       | Technology                    |
 |----------------|-------------------------------|
-| Framework      | Next.js 15.4 (App Router)     |
+| Framework      | Next.js 15.4 (security patched) |
 | Runtime        | Cloudflare Workers            |
 | Database       | Cloudflare D1 (SQLite)        |
 | ORM            | Drizzle ORM                   |
@@ -101,6 +103,7 @@ Visit http://localhost:3000
 | AI LLM         | OpenRouter + AI SDK           |
 | Styling        | Tailwind CSS v4               |
 | UI Components  | shadcn/ui + Radix UI          |
+| Content        | MDX (for legal pages)         |
 | Package Manager| pnpm                          |
 | CI/CD          | GitHub Actions                |
 
@@ -181,6 +184,9 @@ src/
 │   ├── page.tsx              # Home page
 │   ├── sign-in/              # Auth pages
 │   ├── dashboard/            # Protected routes
+│   ├── (legal)/              # Legal pages (MDX)
+│   │   ├── privacy/          # Privacy Policy
+│   │   └── terms/            # Terms of Service
 │   └── api/auth/             # Auth API routes
 ├── components/
 │   ├── ui/                   # shadcn/ui components
@@ -258,9 +264,11 @@ The setup script handles most of these automatically, but if setting up manually
   - [ ] Create R2 buckets (staging + production)
   - [ ] Set GitHub secrets for CI/CD (12 secrets)
   - [ ] Configure custom domains in Cloudflare
+  - [ ] Update legal pages with your company info
 - [ ] Verify email sender in Postmark
 - [ ] Test auth flow end-to-end
 - [ ] Test AI features (image generation, chatbot) if API keys are configured
+- [ ] Review legal pages (Privacy Policy & Terms of Service)
 - [ ] Review security settings
 
 **Note:** Database migrations run automatically via GitHub Actions on deployment!
@@ -345,6 +353,7 @@ Built with amazing open source tools:
 - [Drizzle ORM](https://orm.drizzle.team/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
+- [MDX](https://mdxjs.com/)
 
 ---
 

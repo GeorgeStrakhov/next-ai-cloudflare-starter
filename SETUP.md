@@ -9,6 +9,7 @@ Complete guide to set up and deploy this Next.js + Cloudflare Workers starter te
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Customization](#customization)
+  - [Legal Pages](#legal-pages-privacy-policy--terms-of-service)
 - [Database Setup](#database-setup)
 - [Email Configuration](#email-configuration)
 - [Deployment Setup](#deployment-setup)
@@ -154,6 +155,29 @@ The app uses centralized configuration in `src/lib/config.ts`. Most branding is 
 ### Custom Logo
 
 Replace `/public/logo.svg` with your own logo.
+
+### Legal Pages (Privacy Policy & Terms of Service)
+
+The starter includes pre-built legal pages at `/privacy` and `/terms` written in MDX:
+
+- **Privacy Policy** (`src/app/(legal)/privacy/page.mdx`)
+- **Terms of Service** (`src/app/(legal)/terms/page.mdx`)
+
+The setup script automatically customizes these pages with:
+- Your **legal company name** (prompted during setup)
+- Your **app name**
+- Your **support email**
+- The **effective date** (set to the setup date)
+
+**To customize after setup:**
+
+Edit the MDX files directly. They use standard Markdown with these placeholders (already replaced by setup):
+- `COMPANY_NAME_PLACEHOLDER` → Your legal entity name
+- `APP_NAME_PLACEHOLDER` → Your app display name
+- `SUPPORT_EMAIL_PLACEHOLDER` → Your support email
+- `EFFECTIVE_DATE_PLACEHOLDER` → Policy effective date
+
+**Important:** These legal pages are templates written in broad, protective terms. You should have them reviewed by a legal professional for your specific use case and jurisdiction.
 
 ---
 

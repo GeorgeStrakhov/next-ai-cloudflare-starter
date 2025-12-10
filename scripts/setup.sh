@@ -177,6 +177,7 @@ APP_NAME_DEFAULT=$(echo "$PROJECT_NAME" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i+
 prompt "App display name" "$APP_NAME_DEFAULT" APP_NAME
 prompt "App description" "My awesome application" APP_DESCRIPTION
 prompt "Email address (for sending and support)" "hello@$PROD_DOMAIN" EMAIL_FROM
+prompt "Legal company name (for Terms & Privacy pages)" "$APP_NAME LLC" LEGAL_COMPANY_NAME
 
 echo ""
 if [ "$HAS_GUM" = true ]; then
@@ -197,7 +198,8 @@ if [ "$HAS_GUM" = true ]; then
         "  Staging: https://$STAGING_DOMAIN" \
         "  CDN: https://$CDN_DOMAIN" \
         "" \
-        "📧 Email: $EMAIL_FROM"
+        "📧 Email: $EMAIL_FROM" \
+        "🏢 Legal Entity: $LEGAL_COMPANY_NAME"
 else
     print_info "Configuration summary:"
     echo "  Project: $PROJECT_NAME"
@@ -207,6 +209,7 @@ else
     echo "  Staging: $STAGING_DOMAIN"
     echo "  CDN: $CDN_DOMAIN"
     echo "  Email: $EMAIL_FROM"
+    echo "  Legal entity: $LEGAL_COMPANY_NAME"
 fi
 echo ""
 
@@ -806,6 +809,35 @@ if [ -f ".github/workflows/deploy.yml" ]; then
     print_success "GitHub Actions workflow updated"
 fi
 
+# Update legal pages (Privacy Policy and Terms of Service)
+print_info "Updating legal pages..."
+
+# Get current date for effective date
+EFFECTIVE_DATE=$(date +"%B %d, %Y")
+
+# Update Privacy Policy
+if [ -f "src/app/(legal)/privacy/page.mdx" ]; then
+    sed -i.tmp "s|COMPANY_NAME_PLACEHOLDER|${LEGAL_COMPANY_NAME}|g" src/app/\(legal\)/privacy/page.mdx
+    sed -i.tmp "s|APP_NAME_PLACEHOLDER|${APP_NAME}|g" src/app/\(legal\)/privacy/page.mdx
+    sed -i.tmp "s|SUPPORT_EMAIL_PLACEHOLDER|${EMAIL_FROM}|g" src/app/\(legal\)/privacy/page.mdx
+    sed -i.tmp "s|EFFECTIVE_DATE_PLACEHOLDER|${EFFECTIVE_DATE}|g" src/app/\(legal\)/privacy/page.mdx
+    rm src/app/\(legal\)/privacy/page.mdx.tmp
+    print_success "Privacy Policy updated"
+fi
+
+# Update Terms of Service
+if [ -f "src/app/(legal)/terms/page.mdx" ]; then
+    sed -i.tmp "s|COMPANY_NAME_PLACEHOLDER|${LEGAL_COMPANY_NAME}|g" src/app/\(legal\)/terms/page.mdx
+    sed -i.tmp "s|APP_NAME_PLACEHOLDER|${APP_NAME}|g" src/app/\(legal\)/terms/page.mdx
+    sed -i.tmp "s|SUPPORT_EMAIL_PLACEHOLDER|${EMAIL_FROM}|g" src/app/\(legal\)/terms/page.mdx
+    sed -i.tmp "s|EFFECTIVE_DATE_PLACEHOLDER|${EFFECTIVE_DATE}|g" src/app/\(legal\)/terms/page.mdx
+    rm src/app/\(legal\)/terms/page.mdx.tmp
+    print_success "Terms of Service updated"
+fi
+
+echo ""
+sleep 1
+
 # Generate auth secret
 if command -v openssl &> /dev/null; then
     AUTH_SECRET=$(openssl rand -base64 32)
@@ -1401,6 +1433,7 @@ echo -e "  ${GREEN}✓${NC} Replicate AI image generation"
 echo -e "  ${GREEN}✓${NC} Local environment files (.dev.vars, .env.local)"
 echo -e "  ${GREEN}✓${NC} Dependencies installed (R2, Replicate, Better Auth)"
 echo -e "  ${GREEN}✓${NC} Local database initialized with migrations"
+echo -e "  ${GREEN}✓${NC} Legal pages configured: ${BLUE}/privacy${NC} and ${BLUE}/terms${NC}"
 echo -e "  ${GREEN}✓${NC} GitHub secrets helper: ${BLUE}.github-secrets-setup.txt${NC}"
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

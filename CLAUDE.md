@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js 15.4 application configured to deploy on Cloudflare Workers using OpenNext.js. It provides a modern starter template with AI capabilities and uses:
+This is a Next.js 15.4 (security patched) application configured to deploy on Cloudflare Workers using OpenNext.js. It provides a modern starter template with AI capabilities and uses:
 - **Framework**: Next.js App Router with TypeScript, React 19
 - **Styling**: Tailwind CSS v4, shadcn/ui components
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM

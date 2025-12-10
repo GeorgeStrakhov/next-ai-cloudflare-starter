@@ -2,7 +2,7 @@
 
 ## LATER IMPROVEMENTS:
 
-- add markdown rendering, static pages
+- cookies shmookies
 - add boilerplate privacy policy and terms
 - add logging and alerting (investigate best setup on cloudflare)
 - add analytics setup with custom events
