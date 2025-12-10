@@ -1,7 +1,6 @@
 ##  FIXES:
 
 - all design should be using things like foreground / backgound / accent etc and typefaces too centrally defined, so that design update is really just globals css
-- should be easy to test setup.sh things without actually installing things.
 
 ## LATER IMPROVEMENTS:
 
