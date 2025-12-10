@@ -346,6 +346,72 @@ const admin = await isAdmin('user@example.com');
 await removeAdminEmail('user@example.com');
 ```
 
+### User Dashboard
+Sidebar-based dashboard at `/dashboard` with AI features and user management:
+
+- **Layout**: `src/app/dashboard/layout.tsx` - Auth-protected sidebar layout
+- **Sidebar**: `src/components/dashboard/dashboard-sidebar.tsx` - Nav items, admin link (if admin), user badge
+- **Header**: `src/components/dashboard/dashboard-header.tsx` - Page title and sidebar trigger
+- **Pages**:
+  - `/dashboard` - AI Chat (LLM chatbot with model selection)
+  - `/dashboard/upload` - Image Upload (drag-and-drop to R2)
+  - `/dashboard/generate` - Image Generation (Replicate AI)
+  - `/dashboard/account` - Account Settings (profile management)
+
+**Shared Components**:
+- `src/components/sidebar-user-badge.tsx` - Reusable user badge with dropdown (used in both admin and dashboard sidebars)
+  - DiceBear avatars (`notionists-neutral` style) based on email
+  - Display name from Better Auth `name` field, or derived from email (capitalize part before @ and first `.`)
+  - Dropdown menu with Account Settings, Contact Us, and Sign out
+
+**Important**: Dashboard pages require `export const dynamic = "force-dynamic"` for Cloudflare context access.
+
+### User Profiles
+Extended user data beyond Better Auth's core user table:
+
+- **Schema**: `src/db/schema/user-profiles.ts` - `user_profile` table
+- **API Route**: `src/app/api/profile/route.ts` - GET/POST for profile data
+- **Form**: `src/components/dashboard/account-settings-form.tsx` - Profile editing UI
+
+**Data Separation**:
+- **Better Auth manages**: `name`, `email`, `image` (via `authClient.updateUser()`)
+- **Custom table manages**: `bio` (and future extended fields)
+
+```typescript
+// Update Better Auth fields (name, image)
+import { authClient } from '@/lib/auth-client';
+await authClient.updateUser({ name: "New Name", image: "url" });
+
+// Update custom profile fields (bio)
+await fetch('/api/profile', {
+  method: 'POST',
+  body: JSON.stringify({ bio: "My bio text" })
+});
+```
+
+**Schema**:
+```typescript
+export const userProfile = sqliteTable("user_profile", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  bio: text("bio"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }),
+});
+```
+
+### Contact Page
+Public contact form at `/contact`:
+
+- **Page**: `src/app/contact/page.tsx` - Server component (checks auth for pre-fill)
+- **Form**: `src/components/contact-form.tsx` - Client component with form UI
+- **API Route**: `src/app/api/contact/route.ts` - Sends email via Postmark
+
+**Features**:
+- Pre-fills name/email for authenticated users (email field disabled when pre-filled)
+- Sends formatted HTML/text email to admin (configured in `appConfig.email`)
+- Success state with "Message Sent!" confirmation
+- Accessible from user dropdown in dashboard sidebar
+
 ### AI Features
 
 #### OpenRouter LLM Integration

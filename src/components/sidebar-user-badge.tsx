@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { IconSettings, IconLogout, IconLoader2 } from "@tabler/icons-react";
+import { IconSettings, IconLogout, IconLoader2, IconMail } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 
 interface SidebarUserBadgeProps {
@@ -90,6 +90,12 @@ export function SidebarUserBadge({ user }: SidebarUserBadgeProps) {
               <Link href="/dashboard/account" className="cursor-pointer">
                 <IconSettings className="mr-2 h-4 w-4" />
                 Account Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/contact" className="cursor-pointer">
+                <IconMail className="mr-2 h-4 w-4" />
+                Contact Us
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

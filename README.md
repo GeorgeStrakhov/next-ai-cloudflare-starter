@@ -250,6 +250,23 @@ import { addAdminEmail } from '@/lib/admin';
 await addAdminEmail('newadmin@example.com');
 ```
 
+## User Dashboard
+
+Sidebar-based dashboard at `/dashboard` with:
+- **AI Chat** - LLM chatbot with model selection
+- **Image Upload** - Upload images to R2 storage
+- **Image Generation** - AI image generation via Replicate
+- **Account Settings** - Update name, profile picture, bio
+
+**User profiles**: Extended profile data stored in `user_profile` table (bio, etc.), while core user data (name, image) is managed by Better Auth.
+
+## Contact Page
+
+Public contact form at `/contact`:
+- Pre-fills name/email for authenticated users
+- Sends formatted email to admin via Postmark
+- Accessible from user dropdown in dashboard
+
 ## Environment Variables
 
 ### Required

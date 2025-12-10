@@ -5,7 +5,6 @@
 ## LATER IMPROVEMENTS:
 
 - add logging and alerting (investigate best setup on cloudflare)
-- /contact page
 - add ability to restrict sign-in to only whitelisted emails or domains.
 - add waitlist and invites
 - add TTS and STT services
