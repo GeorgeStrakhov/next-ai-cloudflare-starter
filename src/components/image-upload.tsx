@@ -122,18 +122,18 @@ export function ImageUpload() {
           className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
             dragActive
               ? "border-primary bg-primary/5"
-              : "border-gray-300 hover:border-gray-400"
+              : "border-border hover:border-primary/50"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-lg mb-2">
             Drag and drop images here, or click to select
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Supports multiple files
           </p>
           <Button
@@ -170,11 +170,11 @@ export function ImageUpload() {
                   />
                   <button
                     onClick={() => removeFile(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <p className="text-xs text-gray-500 mt-1 truncate">
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
                     {files[index].name}
                   </p>
                 </div>
@@ -208,18 +208,18 @@ export function ImageUpload() {
                     className="object-cover rounded-lg"
                   />
                 </div>
-                <p className="text-sm text-gray-600 truncate">{img.filename}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm text-muted-foreground truncate">{img.filename}</p>
+                <p className="text-xs text-muted-foreground">
                   {(img.size / 1024).toFixed(2)} KB
                 </p>
                 <div className="pt-2 space-y-2">
-                  <p className="text-xs font-medium text-gray-700">CDN URL:</p>
+                  <p className="text-xs font-medium">CDN URL:</p>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={img.url}
                       readOnly
-                      className="text-xs bg-gray-50 border rounded px-2 py-1 flex-1 truncate"
+                      className="text-xs bg-muted border rounded px-2 py-1 flex-1 truncate"
                     />
                     <Button
                       size="sm"

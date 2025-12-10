@@ -55,8 +55,8 @@ export function ContactForm({ user }: ContactFormProps) {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-              <IconSend className="h-6 w-6 text-green-600" />
+            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
+              <IconSend className="h-6 w-6 text-success" />
             </div>
             <CardTitle>Message Sent!</CardTitle>
             <CardDescription>

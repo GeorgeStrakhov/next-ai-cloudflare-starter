@@ -168,7 +168,7 @@ export function ImageGenerator() {
           </Button>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
               {error}
             </div>
           )}
@@ -190,19 +190,19 @@ export function ImageGenerator() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium">Prompt:</p>
-              <p className="text-sm text-gray-600">{generatedImage.prompt}</p>
+              <p className="text-sm text-muted-foreground">{generatedImage.prompt}</p>
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Size: {(generatedImage.size / 1024).toFixed(2)} KB
             </p>
             <div className="pt-2 space-y-2">
-              <p className="text-xs font-medium text-gray-700">CDN URL:</p>
+              <p className="text-xs font-medium">CDN URL:</p>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={generatedImage.url}
                   readOnly
-                  className="text-xs bg-gray-50 border rounded px-2 py-1.5 flex-1 truncate"
+                  className="text-xs bg-muted border rounded px-2 py-1.5 flex-1 truncate"
                 />
                 <Button
                   size="sm"

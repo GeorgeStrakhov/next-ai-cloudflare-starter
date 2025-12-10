@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function DashboardHeader() {
   return (
@@ -14,6 +15,9 @@ export function DashboardHeader() {
           Dashboard
         </h1>
       </Link>
+      <div className="ml-auto">
+        <ModeToggle />
+      </div>
     </header>
   );
 }

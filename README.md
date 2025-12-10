@@ -176,9 +176,13 @@ EMAIL_FROM=noreply@mydomain.com
   - Update in: `wrangler.jsonc`, `package.json`, `scripts/`
   - Requirements: lowercase letters, numbers, dashes only (no dots, underscores, or spaces)
 - Logo: `/public/logo.svg`
-- Styling: `src/app/globals.css`
 
-See [SETUP.md](./SETUP.md#customization) for detailed instructions.
+**Theming & Fonts:**
+- **Colors**: Edit CSS variables in `src/app/globals.css` (supports light/dark mode)
+- **Fonts**: Edit `src/lib/fonts.ts` to change Google Fonts
+- **Dark mode**: Toggle included in dashboard header (uses `next-themes`)
+
+See [CLAUDE.md](./CLAUDE.md#theming--dark-mode) for detailed theming guide.
 
 ## Project Structure
 

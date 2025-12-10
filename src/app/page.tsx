@@ -17,7 +17,7 @@ export default function Home() {
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center">
           {appConfig.name}
         </h1>
-        <p className="text-sm sm:text-base text-gray-500 mt-4 sm:mt-6 text-center max-w-md px-4">
+        <p className="text-sm sm:text-base text-muted-foreground mt-4 sm:mt-6 text-center max-w-md px-4">
           {appConfig.description}
         </p>
         <Link href="/sign-in" className="mt-6 sm:mt-8">

@@ -9,6 +9,7 @@ Complete guide to set up and deploy this Next.js + Cloudflare Workers starter te
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Customization](#customization)
+  - [Theming & Fonts](#theming--fonts)
   - [Legal Pages](#legal-pages-privacy-policy--terms-of-service)
 - [Database Setup](#database-setup)
 - [Email Configuration](#email-configuration)
@@ -155,6 +156,46 @@ The app uses centralized configuration in `src/lib/config.ts`. Most branding is 
 ### Custom Logo
 
 Replace `/public/logo.svg` with your own logo.
+
+### Theming & Fonts
+
+The starter includes a complete theming system with dark mode support.
+
+**Colors:**
+Edit CSS variables in `src/app/globals.css`:
+- `:root` section for light mode colors
+- `.dark` section for dark mode colors
+- Uses OKLCH color space for perceptually uniform colors
+
+**Fonts:**
+1. Edit `src/lib/fonts.ts` to import your Google Fonts
+2. Update `src/app/globals.css` to map the font variables
+
+Example in `src/lib/fonts.ts`:
+```typescript
+import { Inter, Playfair_Display } from "next/font/google";
+
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
+
+export const fontVariables = `${inter.variable} ${playfair.variable}`;
+```
+
+Then in `globals.css`:
+```css
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-inter);
+}
+```
+
+**Dark Mode:**
+- Toggle is in the dashboard header
+- Uses `next-themes` for system preference detection
+- Theme preference persists in localStorage
+
+See [CLAUDE.md](./CLAUDE.md#theming--dark-mode) for detailed theming documentation.
 
 ### Legal Pages (Privacy Policy & Terms of Service)
 
@@ -569,10 +610,12 @@ If your worker bundle is too large:
 
 ## Next Steps
 
-- [ ] Customize branding and styling
+- [ ] Customize theme colors in `src/app/globals.css`
+- [ ] Customize fonts in `src/lib/fonts.ts`
+- [ ] Replace logo at `/public/logo.svg`
 - [ ] Add your app's features
 - [ ] Set up monitoring (Cloudflare dashboard)
-- [ ] Configure analytics
+- [ ] Configure analytics (GA4, PostHog)
 - [ ] Add error tracking (e.g., Sentry)
 - [ ] Set up backups for D1 database
 

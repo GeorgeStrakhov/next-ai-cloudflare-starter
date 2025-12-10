@@ -309,6 +309,100 @@ This project uses:
 
 **IMPORTANT**: Always install official shadcn/ui components using the CLI command above. Never create custom UI components manually if an official shadcn version exists. This ensures consistent styling, accessibility, and compatibility with the rest of the UI system.
 
+### Theming & Dark Mode
+
+This starter includes a complete theming system with dark mode support via `next-themes`.
+
+**Architecture:**
+- **Theme Provider**: `src/components/theme-provider.tsx` - Wraps app with next-themes
+- **Mode Toggle**: `src/components/mode-toggle.tsx` - Sun/moon dropdown for theme switching
+- **CSS Variables**: All colors defined in `src/app/globals.css` using OKLCH color space
+
+**Color System:**
+All colors use semantic CSS variables that automatically adapt to light/dark themes:
+
+| Variable | Usage |
+|----------|-------|
+| `bg-background`, `text-foreground` | Main page background/text |
+| `bg-card`, `text-card-foreground` | Card components |
+| `bg-primary`, `text-primary-foreground` | Primary buttons, links |
+| `bg-secondary`, `text-secondary-foreground` | Secondary elements |
+| `bg-muted`, `text-muted-foreground` | Muted/disabled states |
+| `bg-accent`, `text-accent-foreground` | Accent highlights |
+| `bg-destructive`, `text-destructive-foreground` | Delete/error actions |
+| `bg-success`, `text-success` | Success states |
+| `bg-warning`, `text-warning` | Warning states |
+| `bg-info`, `text-info` | Informational states |
+| `border-border` | Borders |
+| `bg-input` | Form inputs |
+
+**Font System:**
+Fonts are centralized in `src/lib/fonts.ts` with three semantic variables:
+
+| Variable | CSS Class | Purpose |
+|----------|-----------|---------|
+| `--font-heading` | `font-heading` | Headings (h1, h2, etc.) |
+| `--font-body` | `font-body` | Body text |
+| `--font-mono` | `font-mono` | Code blocks |
+
+**Customizing Fonts (2 steps):**
+
+**Step 1:** Edit `src/lib/fonts.ts` to import your Google Fonts:
+```typescript
+import { Inter, Playfair_Display, Fira_Code } from "next/font/google";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+
+const firaCode = Fira_Code({
+  variable: "--font-fira-code",
+  subsets: ["latin"],
+});
+
+export const fontVariables = `${inter.variable} ${playfair.variable} ${firaCode.variable}`;
+```
+
+**Step 2:** Update `src/app/globals.css` to map your fonts:
+```css
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-inter);
+  --font-mono: var(--font-fira-code);
+}
+```
+
+Browse fonts at: https://fonts.google.com
+
+**Customizing Colors:**
+
+1. **Change colors**: Edit CSS variables in `src/app/globals.css` under `:root` (light) and `.dark` (dark)
+2. **Add brand colors**: Add new variables following the pattern:
+   ```css
+   /* In :root and .dark */
+   --brand: oklch(0.6 0.2 250);
+   --brand-foreground: oklch(1 0 0);
+
+   /* In @theme inline */
+   --color-brand: var(--brand);
+   --color-brand-foreground: var(--brand-foreground);
+   ```
+
+**IMPORTANT - Avoid Hardcoded Colors:**
+Never use hardcoded Tailwind colors like `text-gray-500`, `bg-red-100`, etc. Always use semantic variables:
+- `text-gray-500` → `text-muted-foreground`
+- `bg-gray-50` → `bg-muted`
+- `text-red-600` → `text-destructive`
+- `bg-green-100` → `bg-success/10`
+- `border-gray-300` → `border-border`
+
 ### Better Auth
 Authentication is handled by Better Auth with magic link (email-only):
 - **Server Config**: `src/lib/auth.ts` (creates auth instance per-request)

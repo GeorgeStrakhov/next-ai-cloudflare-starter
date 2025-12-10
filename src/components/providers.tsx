@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, Suspense } from "react";
+import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsentProvider, useCookieConsent } from "@/lib/cookie-consent";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { AnalyticsProvider } from "@/lib/analytics";
@@ -29,10 +30,17 @@ function ConditionalAnalytics() {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <CookieConsentProvider>
-      {children}
-      <CookieConsentBanner />
-      <ConditionalAnalytics />
-    </CookieConsentProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <CookieConsentProvider>
+        {children}
+        <CookieConsentBanner />
+        <ConditionalAnalytics />
+      </CookieConsentProvider>
+    </ThemeProvider>
   );
 }
