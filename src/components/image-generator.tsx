@@ -100,7 +100,7 @@ export function ImageGenerator() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <div className="space-y-4">
         <form onSubmit={handleGenerate} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

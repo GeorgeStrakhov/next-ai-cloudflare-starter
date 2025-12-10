@@ -115,10 +115,8 @@ export function ImageUpload() {
   };
 
   return (
-    <div className="w-full max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Image Upload</h2>
-
         {/* Dropzone */}
         <div
           className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${

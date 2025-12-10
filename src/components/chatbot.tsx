@@ -41,7 +41,7 @@ export function Chatbot() {
   };
 
   return (
-    <Card className="flex flex-col h-[600px] w-full max-w-2xl mx-auto">
+    <Card className="flex flex-col h-[600px] w-full">
       {/* Header with model selection */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b gap-3">
         <h2 className="text-lg font-semibold">AI Chatbot</h2>

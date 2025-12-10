@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  IconShield,
-  IconUsers,
-  IconArrowLeft,
+  IconMessageCircle,
+  IconUpload,
+  IconSparkles,
   IconLayoutDashboard,
+  IconShield,
 } from "@tabler/icons-react";
 import {
   Sidebar,
@@ -23,33 +24,35 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarUserBadge } from "@/components/sidebar-user-badge";
 
-interface AdminSidebarProps {
+interface DashboardSidebarProps {
   user: {
     id: string;
     name: string;
     email: string;
     image?: string | null;
   };
+  isAdmin?: boolean;
 }
 
 const navItems = [
   {
-    title: "Overview",
-    url: "/admin",
-    icon: IconLayoutDashboard,
+    title: "AI Chat",
+    url: "/dashboard",
+    icon: IconMessageCircle,
   },
   {
-    title: "Users",
-    url: "/admin/users",
-    icon: IconUsers,
+    title: "Image Upload",
+    url: "/dashboard/upload",
+    icon: IconUpload,
   },
-  // Add more admin sections here as needed:
-  // { title: "Products", url: "/admin/products", icon: IconPackage },
-  // { title: "Orders", url: "/admin/orders", icon: IconReceipt },
-  // { title: "Settings", url: "/admin/settings", icon: IconSettings },
+  {
+    title: "Image Generation",
+    url: "/dashboard/generate",
+    icon: IconSparkles,
+  },
 ];
 
-export function AdminSidebar({ user }: AdminSidebarProps) {
+export function DashboardSidebar({ user, isAdmin }: DashboardSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -58,14 +61,14 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/admin">
+              <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <IconShield className="size-4" />
+                  <IconLayoutDashboard className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Admin</span>
+                  <span className="truncate font-semibold">Dashboard</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    Dashboard
+                    Your workspace
                   </span>
                 </div>
               </Link>
@@ -76,13 +79,13 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Features</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
                 const isActive =
-                  item.url === "/admin"
-                    ? pathname === "/admin"
+                  item.url === "/dashboard"
+                    ? pathname === "/dashboard"
                     : pathname.startsWith(item.url);
 
                 return (
@@ -103,17 +106,21 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/dashboard">
-                <IconArrowLeft className="size-4" />
-                <span>Back to Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarSeparator />
+        {isAdmin && (
+          <>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/admin">
+                    <IconShield className="size-4" />
+                    <span>Admin Panel</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <SidebarSeparator />
+          </>
+        )}
         <SidebarUserBadge user={user} />
       </SidebarFooter>
     </Sidebar>
