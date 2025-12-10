@@ -8,11 +8,64 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/ui-lib.sh"
 
 # =============================================================================
+# PARSE COMMAND LINE FLAGS
+# =============================================================================
+
+SKIP_CLOUDFLARE=false
+SKIP_GIT_RESET=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --skip-cloudflare|--local-only)
+            SKIP_CLOUDFLARE=true
+            shift
+            ;;
+        --skip-git-reset)
+            SKIP_GIT_RESET=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: bash scripts/setup.sh [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --skip-cloudflare, --local-only   Skip all Cloudflare resource creation"
+            echo "                                    (D1 databases, R2 buckets, API tokens)"
+            echo "                                    Useful for template testing"
+            echo "  --skip-git-reset                  Don't wipe .git and reinitialize"
+            echo "                                    Useful for template testing"
+            echo "  --help, -h                        Show this help message"
+            echo ""
+            echo "For template maintainers testing setup.sh:"
+            echo "  bash scripts/setup.sh --skip-cloudflare --skip-git-reset"
+            echo ""
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# =============================================================================
 # WELCOME
 # =============================================================================
 
 clear
 print_header "🚀 Next.js + Cloudflare Workers Starter - Setup Wizard"
+
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    echo -e "${YELLOW}⚠️  Running in LOCAL-ONLY mode (--skip-cloudflare)${NC}"
+    echo "   Cloudflare resources will NOT be created"
+    echo "   Placeholder values will be used for database IDs, etc."
+    echo ""
+fi
+
+if [ "$SKIP_GIT_RESET" = true ]; then
+    echo -e "${YELLOW}⚠️  Git reset will be skipped (--skip-git-reset)${NC}"
+    echo ""
+fi
 
 echo "This script will help you set up your project in minutes!"
 echo ""
@@ -65,29 +118,33 @@ else
     exit 1
 fi
 
-# Check wrangler login status
-print_info "Checking Cloudflare authentication..."
-
-# Run whoami command, allowing npx install prompt to show
-WHOAMI_OUTPUT=$(npx -y wrangler whoami 2>&1)
-WHOAMI_EXIT=$?
-
-if [ $WHOAMI_EXIT -eq 0 ]; then
-    if echo "$WHOAMI_OUTPUT" | grep -q "logged in"; then
-        print_success "Logged in to Cloudflare"
-    else
-        print_warning "Not logged in to Cloudflare"
-        if confirm "Would you like to login now?"; then
-            npx -y wrangler login
-        else
-            print_error "Cloudflare login required for database creation. Run: npx wrangler login"
-            exit 1
-        fi
-    fi
+# Check wrangler login status (skip in local-only mode)
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    print_info "Skipping Cloudflare authentication check (--skip-cloudflare)"
 else
-    print_error "Unable to check Cloudflare login status"
-    echo "$WHOAMI_OUTPUT"
-    exit 1
+    print_info "Checking Cloudflare authentication..."
+
+    # Run whoami command, allowing npx install prompt to show
+    WHOAMI_OUTPUT=$(npx -y wrangler whoami 2>&1)
+    WHOAMI_EXIT=$?
+
+    if [ $WHOAMI_EXIT -eq 0 ]; then
+        if echo "$WHOAMI_OUTPUT" | grep -q "logged in"; then
+            print_success "Logged in to Cloudflare"
+        else
+            print_warning "Not logged in to Cloudflare"
+            if confirm "Would you like to login now?"; then
+                npx -y wrangler login
+            else
+                print_error "Cloudflare login required for database creation. Run: npx wrangler login"
+                exit 1
+            fi
+        fi
+    else
+        print_error "Unable to check Cloudflare login status"
+        echo "$WHOAMI_OUTPUT"
+        exit 1
+    fi
 fi
 
 # Check git
@@ -230,36 +287,44 @@ sleep 1
 
 print_header "🔑 Credentials Setup"
 
-echo "We need a few API keys to automate your setup."
-echo "These will be stored locally in .dev.vars and .env.local (gitignored)."
-echo "You'll need to add them to GitHub Secrets later for deployments."
-echo ""
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    echo "Skipping Cloudflare credentials (--skip-cloudflare mode)"
+    echo "Using placeholder values for testing."
+    echo ""
+    CF_API_TOKEN="placeholder-token-for-testing"
+    ACCOUNT_ID="placeholder-account-id"
+else
+    echo "We need a few API keys to automate your setup."
+    echo "These will be stored locally in .dev.vars and .env.local (gitignored)."
+    echo "You'll need to add them to GitHub Secrets later for deployments."
+    echo ""
 
-# Cloudflare API Token
-print_info "Cloudflare API Token (Required)"
-echo "This will be used to:"
-echo "  • Create D1 databases"
-echo "  • Create R2 buckets and connect domains"
-echo "  • Generate R2 API tokens"
-echo "  • Enable image transformations"
-echo ""
-echo "Create token at: https://dash.cloudflare.com/profile/api-tokens"
-echo ""
-echo "Suggested: Start with 'Edit Cloudflare Workers' template, then add:"
-echo "  • User > API Tokens > Edit (needed for R2 token creation)"
-echo "  • Account > D1 > Edit"
-echo "  • Account > Workers R2 Storage > Edit"
-echo "  • Zone > DNS > Edit"
-echo "  • Zone > Zone Settings > Edit"
-echo ""
-prompt "Cloudflare API Token" "" CF_API_TOKEN
+    # Cloudflare API Token
+    print_info "Cloudflare API Token (Required)"
+    echo "This will be used to:"
+    echo "  • Create D1 databases"
+    echo "  • Create R2 buckets and connect domains"
+    echo "  • Generate R2 API tokens"
+    echo "  • Enable image transformations"
+    echo ""
+    echo "Create token at: https://dash.cloudflare.com/profile/api-tokens"
+    echo ""
+    echo "Suggested: Start with 'Edit Cloudflare Workers' template, then add:"
+    echo "  • User > API Tokens > Edit (needed for R2 token creation)"
+    echo "  • Account > D1 > Edit"
+    echo "  • Account > Workers R2 Storage > Edit"
+    echo "  • Zone > DNS > Edit"
+    echo "  • Zone > Zone Settings > Edit"
+    echo ""
+    prompt "Cloudflare API Token" "" CF_API_TOKEN
 
-if [ -z "$CF_API_TOKEN" ]; then
-    print_error "Cloudflare API Token is required"
-    exit 1
+    if [ -z "$CF_API_TOKEN" ]; then
+        print_error "Cloudflare API Token is required"
+        exit 1
+    fi
+
+    echo ""
 fi
-
-echo ""
 
 # Postmark API Key (optional)
 print_info "Postmark API Key (Optional - for email)"
@@ -310,9 +375,17 @@ sleep 2
 # CREATE D1 DATABASES
 # =============================================================================
 
-print_header "🗄️  Creating Cloudflare D1 Databases"
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    print_header "🗄️  Cloudflare D1 Databases (Skipped)"
+    print_info "Using placeholder database IDs for testing"
+    PROD_DB_ID="placeholder-prod-db-id-00000000-0000-0000-0000-000000000000"
+    STAGING_DB_ID="placeholder-staging-db-id-00000000-0000-0000-0000-000000000000"
+    echo ""
+    sleep 1
+else
+    print_header "🗄️  Creating Cloudflare D1 Databases"
 
-print_info "Creating production database..."
+    print_info "Creating production database..."
 PROD_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db" 2>&1 || true)
 
 if echo "$PROD_DB_OUTPUT" | grep -q "already exists"; then
@@ -388,17 +461,29 @@ else
     print_success "Staging database created: $STAGING_DB_ID"
 fi
 
-echo ""
-sleep 1
+    echo ""
+    sleep 1
+fi
 
 # =============================================================================
 # CREATE R2 BUCKETS
 # =============================================================================
 
-print_header "🪣 Creating R2 Storage Buckets"
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    print_header "🪣 R2 Storage Buckets (Skipped)"
+    print_info "Using placeholder R2 credentials for testing"
+    R2_ACCESS_KEY="placeholder-r2-access-key"
+    R2_SECRET_KEY="placeholder-r2-secret-key"
+    R2_ACCESS_KEY_STAGING="placeholder-r2-access-key-staging"
+    R2_SECRET_KEY_STAGING="placeholder-r2-secret-key-staging"
+    ZONE_ID=""
+    echo ""
+    sleep 1
+else
+    print_header "🪣 Creating R2 Storage Buckets"
 
-# Create production R2 bucket
-print_info "Creating production R2 bucket..."
+    # Create production R2 bucket
+    print_info "Creating production R2 bucket..."
 BUCKET_CREATE_OUTPUT=$(npx wrangler r2 bucket create "${PROJECT_NAME_LOWER}-storage" 2>&1 || true)
 if echo "$BUCKET_CREATE_OUTPUT" | grep -q "Created bucket"; then
     print_success "Production R2 bucket created: ${PROJECT_NAME_LOWER}-storage"
@@ -488,16 +573,18 @@ else
     print_info "  2. Or re-run this script after adding the domain"
 fi
 
-echo ""
-sleep 1
+    echo ""
+    sleep 1
+fi
 
 # =============================================================================
-# CREATE R2 API TOKENS
+# CREATE R2 API TOKENS (skipped in local-only mode - handled above)
 # =============================================================================
 
-print_header "🔐 Creating R2 API Tokens"
+if [ "$SKIP_CLOUDFLARE" != true ]; then
+    print_header "🔐 Creating R2 API Tokens"
 
-print_info "Attempting to create R2 API token for production..."
+    print_info "Attempting to create R2 API token for production..."
 
 # Try to create R2 API token via Cloudflare API
 R2_TOKEN_RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/user/tokens" \
@@ -641,17 +728,24 @@ if [ -z "$R2_ACCESS_KEY_STAGING" ] || [ -z "$R2_SECRET_KEY_STAGING" ]; then
     prompt "R2 Secret Access Key (Staging)" "" R2_SECRET_KEY_STAGING
 fi
 
-echo ""
-sleep 1
+    echo ""
+    sleep 1
+fi
 
 # =============================================================================
 # ENABLE IMAGE TRANSFORMATIONS
 # =============================================================================
 
-print_header "🖼️  Enabling Image Transformations"
+if [ "$SKIP_CLOUDFLARE" = true ]; then
+    print_header "🖼️  Image Transformations (Skipped)"
+    print_info "Skipping in local-only mode"
+    echo ""
+    sleep 1
+else
+    print_header "🖼️  Enabling Image Transformations"
 
-# Get zone ID for the domain
-print_info "Getting zone ID for ${PROD_DOMAIN}..."
+    # Get zone ID for the domain
+    print_info "Getting zone ID for ${PROD_DOMAIN}..."
 ZONE_RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${PROD_DOMAIN}" \
   -H "Authorization: Bearer ${CF_API_TOKEN}" \
   -H "Content-Type: application/json")
@@ -683,8 +777,9 @@ else
     fi
 fi
 
-echo ""
-sleep 1
+    echo ""
+    sleep 1
+fi
 
 # =============================================================================
 # UPDATE CONFIGURATION FILES
@@ -1043,7 +1138,13 @@ sleep 1
 # GIT SETUP - REINITIALIZE FOR YOUR PROJECT
 # =============================================================================
 
-if command -v git &> /dev/null; then
+if [ "$SKIP_GIT_RESET" = true ]; then
+    print_header "🌿 Git Repository Setup (Skipped)"
+    print_info "Skipping git reset (--skip-git-reset)"
+    print_info "Your existing .git directory is preserved"
+    echo ""
+    GIT_INITIALIZED=false
+elif command -v git &> /dev/null; then
     print_header "🌿 Git Repository Setup"
 
     echo "This starter template needs a fresh git repository for your project."
