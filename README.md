@@ -9,6 +9,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 - 🗄️ **Cloudflare D1** serverless SQLite database
 - 🔍 **Drizzle ORM** for type-safe database access
 - 🔐 **Better Auth** with magic link authentication
+- 👑 **Admin interface** with user management
 - 🎨 **Tailwind CSS v4** + **shadcn/ui** components
 - 📧 **Postmark** email integration
 - 🪣 **Cloudflare R2** object storage with CDN
@@ -98,6 +99,7 @@ Visit http://localhost:3000
 | Database       | Cloudflare D1 (SQLite)        |
 | ORM            | Drizzle ORM                   |
 | Auth           | Better Auth (magic link)      |
+| Admin          | Built-in admin panel          |
 | Email          | Postmark                      |
 | Storage        | Cloudflare R2 (S3-compatible) |
 | AI Images      | Replicate                     |
@@ -186,18 +188,23 @@ src/
 │   ├── page.tsx              # Home page
 │   ├── sign-in/              # Auth pages
 │   ├── dashboard/            # Protected routes
+│   ├── admin/                # Admin interface
+│   │   ├── page.tsx          # Dashboard with stats
+│   │   └── users/            # User management
 │   ├── (legal)/              # Legal pages (MDX)
 │   │   ├── privacy/          # Privacy Policy
 │   │   └── terms/            # Terms of Service
-│   └── api/auth/             # Auth API routes
+│   └── api/                  # API routes
 ├── components/
 │   ├── ui/                   # shadcn/ui components
+│   ├── admin/                # Admin components
 │   └── auth/                 # Auth components
 ├── db/
 │   └── schema/               # Database schema
 ├── lib/
 │   ├── config.ts             # 🎯 Central configuration
 │   ├── auth.ts               # Auth setup
+│   ├── admin.ts              # Admin authorization helpers
 │   ├── analytics/            # Analytics tracking
 │   ├── email/                # Email templates
 │   └── services/             # Service layers
@@ -226,6 +233,21 @@ export default async function DashboardPage() {
 
   return <div>Welcome {session.user.email}!</div>;
 }
+```
+
+## Admin Interface
+
+Built-in admin panel at `/admin` with:
+- **Dashboard** - User stats (total users, admins, new this week)
+- **User Management** - View all users, grant/revoke admin access, delete users
+- **Email-based access** - Simple whitelist in `admin_emails` database table
+
+**First admin**: The setup script prompts for an admin email and seeds it automatically.
+
+**Adding more admins**: Use the admin interface or programmatically:
+```typescript
+import { addAdminEmail } from '@/lib/admin';
+await addAdminEmail('newadmin@example.com');
 ```
 
 ## Environment Variables

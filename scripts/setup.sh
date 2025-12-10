@@ -178,6 +178,7 @@ prompt "App display name" "$APP_NAME_DEFAULT" APP_NAME
 prompt "App description" "My awesome application" APP_DESCRIPTION
 prompt "Email address (for sending and support)" "hello@$PROD_DOMAIN" EMAIL_FROM
 prompt "Legal company name (for Terms & Privacy pages)" "$APP_NAME LLC" LEGAL_COMPANY_NAME
+prompt "Admin email (for initial admin access)" "$EMAIL_FROM" ADMIN_EMAIL
 
 echo ""
 if [ "$HAS_GUM" = true ]; then
@@ -199,7 +200,8 @@ if [ "$HAS_GUM" = true ]; then
         "  CDN: https://$CDN_DOMAIN" \
         "" \
         "📧 Email: $EMAIL_FROM" \
-        "🏢 Legal Entity: $LEGAL_COMPANY_NAME"
+        "🏢 Legal Entity: $LEGAL_COMPANY_NAME" \
+        "🔐 Admin Email: $ADMIN_EMAIL"
 else
     print_info "Configuration summary:"
     echo "  Project: $PROJECT_NAME"
@@ -210,6 +212,7 @@ else
     echo "  CDN: $CDN_DOMAIN"
     echo "  Email: $EMAIL_FROM"
     echo "  Legal entity: $LEGAL_COMPANY_NAME"
+    echo "  Admin email: $ADMIN_EMAIL"
 fi
 echo ""
 
@@ -1113,6 +1116,17 @@ fi
 
 echo ""
 
+# Seed initial admin email to local database
+print_info "Seeding initial admin email to local database..."
+ADMIN_EMAIL_LOWER=$(echo "$ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')
+if npx wrangler d1 execute "${PROJECT_NAME_LOWER}-db" --local --command "INSERT OR IGNORE INTO admin_emails (email, created_at) VALUES ('${ADMIN_EMAIL_LOWER}', strftime('%s', 'now') * 1000);" 2>/dev/null; then
+    print_success "Admin email seeded: $ADMIN_EMAIL_LOWER"
+else
+    print_warning "Could not seed admin email. You can add it manually via the admin panel."
+fi
+
+echo ""
+
 # Commit migrations to git if git was initialized
 if [ "$GIT_INITIALIZED" = true ]; then
     if [ -d "drizzle" ] && [ -n "$(ls -A drizzle 2>/dev/null)" ]; then
@@ -1434,6 +1448,7 @@ echo -e "  ${GREEN}✓${NC} Local environment files (.dev.vars, .env.local)"
 echo -e "  ${GREEN}✓${NC} Dependencies installed (R2, Replicate, Better Auth)"
 echo -e "  ${GREEN}✓${NC} Local database initialized with migrations"
 echo -e "  ${GREEN}✓${NC} Legal pages configured: ${BLUE}/privacy${NC} and ${BLUE}/terms${NC}"
+echo -e "  ${GREEN}✓${NC} Admin interface at ${BLUE}/admin${NC} (seeded with: ${BLUE}$ADMIN_EMAIL${NC})"
 echo -e "  ${GREEN}✓${NC} GitHub secrets helper: ${BLUE}.github-secrets-setup.txt${NC}"
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1449,6 +1464,7 @@ echo -e "This will start your Next.js app at ${BLUE}http://localhost:3000${NC}"
 echo ""
 echo "Features available locally:"
 echo "  • Magic link authentication (emails logged to console in dev mode)"
+echo "  • Admin interface at /admin (user management, statistics)"
 echo "  • File uploads to R2 storage"
 echo "  • AI image generation with Replicate"
 echo "  • Full database access with Drizzle ORM"

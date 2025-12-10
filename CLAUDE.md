@@ -9,6 +9,7 @@ This is a Next.js 15.4 (security patched) application configured to deploy on Cl
 - **Styling**: Tailwind CSS v4, shadcn/ui components
 - **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
 - **Auth**: Better Auth with magic link authentication
+- **Admin**: Built-in admin interface with user management
 - **Storage**: Cloudflare R2 (S3-compatible object storage)
 - **AI Image Gen**: Replicate (Imagen 4, FLUX models)
 - **AI LLM**: OpenRouter + AI SDK 5 (GPT, Gemini, Claude)
@@ -318,6 +319,32 @@ Authentication is handled by Better Auth with magic link (email-only):
 - **Database**: Uses Better Auth's automatic D1 table creation
 
 **Important**: Auth instance must be created per-request using `createAuth()` to access Cloudflare context.
+
+### Admin Interface
+The starter includes a built-in admin interface at `/admin`:
+- **Authorization**: Email-based whitelist in `admin_emails` table
+- **Layout**: `src/app/admin/layout.tsx` - Sidebar-based layout with auth check
+- **Dashboard**: `src/app/admin/page.tsx` - Overview with user stats
+- **Users Page**: `src/app/admin/users/page.tsx` - User management
+- **Components**: `src/components/admin/` - AdminSidebar, AdminHeader, UsersTable
+- **Helpers**: `src/lib/admin.ts` - `isAdmin()`, `addAdminEmail()`, `removeAdminEmail()`
+- **API Routes**: `/api/admin/users/toggle-admin`, `/api/admin/users/delete`
+
+**Setup**: The setup script prompts for an admin email and seeds it into the database.
+
+**Adding admins programmatically**:
+```typescript
+import { addAdminEmail, removeAdminEmail, isAdmin } from '@/lib/admin';
+
+// Grant admin access
+await addAdminEmail('user@example.com');
+
+// Check if user is admin
+const admin = await isAdmin('user@example.com');
+
+// Revoke admin access
+await removeAdminEmail('user@example.com');
+```
 
 ### AI Features
 
