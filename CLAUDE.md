@@ -12,6 +12,7 @@ This is a Next.js 15.4 (security patched) application configured to deploy on Cl
 - **Storage**: Cloudflare R2 (S3-compatible object storage)
 - **AI Image Gen**: Replicate (Imagen 4, FLUX models)
 - **AI LLM**: OpenRouter + AI SDK 5 (GPT, Gemini, Claude)
+- **Analytics**: Google Analytics + PostHog (privacy-first, cookie consent integrated)
 - **Package Manager**: pnpm (not npm)
 
 ## Centralized Configuration
@@ -60,12 +61,6 @@ pnpm dev
 pnpm build
 # Standard Next.js production build
 
-pnpm deploy:staging
-# Builds with OpenNext.js and deploys to staging (staging.your-domain.com)
-
-pnpm deploy:production
-# Builds with OpenNext.js and deploys to production (your-domain.com)
-
 pnpm preview
 # Builds and previews locally before deploying
 ```
@@ -80,11 +75,7 @@ pnpm db:generate
 pnpm db:migrate:local
 # Applies migrations to local D1 database (for development)
 
-pnpm db:migrate:staging
-# Applies migrations to staging D1 database (remote)
-
-pnpm db:migrate:production ## DON'T USE THIS. BECAUSE MIGRATIONS ARE APPLIED AUTOMATICALLY ON DEPLOY VIA GH-ACTIONS
-# Applies migrations to production D1 database (remote)
+# production and staging migrations ARE APPLIED AUTOMATICALLY ON DEPLOY VIA GH-ACTIONS
 
 pnpm db:studio
 # Opens Drizzle Studio for local database at http://localhost:4983
@@ -422,3 +413,71 @@ S3_PUBLIC_ENDPOINT=https://cdn-staging.your-domain.com
 These credentials are automatically configured by the setup script to point to your staging R2 bucket.
 - ✅ Custom domain configured via Cloudflare dashboard connects to R2 bucket
 - ✅ R2 buckets and custom domains are created automatically by the setup script
+
+### Analytics
+
+Privacy-first analytics with Google Analytics and PostHog support, integrated with cookie consent:
+
+- **Service Layer**: `src/lib/analytics/` - Type-safe analytics tracking
+- **Providers**: Google Analytics 4, PostHog, Console (dev)
+- **Cookie Consent**: Analytics only loads after user accepts cookies
+- **Auto-tracking**: Page views, user identification, sign in/out events
+
+**Folder Structure:**
+```
+src/lib/analytics/
+├── index.ts              # Main exports
+├── tracker.ts            # Core AnalyticsTracker class
+├── events.ts             # Event definitions and types
+├── hooks.ts              # React hooks (useAnalytics, useIdentifyUser)
+├── components/
+│   └── analytics-provider.tsx  # Root provider component
+└── providers/
+    ├── types.ts          # Provider interface
+    ├── posthog.ts        # PostHog provider
+    └── console.ts        # Console provider (dev)
+```
+
+**Usage:**
+```typescript
+import { track, AnalyticsEvents, useAnalytics } from "@/lib/analytics";
+
+// Direct tracking (anywhere)
+track(AnalyticsEvents.BUTTON_CLICKED, { buttonId: "signup" });
+
+// Hook-based (in React components)
+const { track, identify, reset } = useAnalytics();
+track(AnalyticsEvents.FORM_SUBMITTED, { formId: "contact" });
+```
+
+**Available Events:**
+- `SIGN_IN`, `SIGN_OUT`, `SIGN_UP` - Authentication
+- `BUTTON_CLICKED`, `FORM_SUBMITTED`, `LINK_CLICKED` - User actions
+- `PAGE_VIEWED`, `MODAL_OPENED`, `MODAL_CLOSED` - Navigation
+- `FEATURE_USED`, `SEARCH_PERFORMED`, `FILTER_APPLIED` - Engagement
+- `ERROR_OCCURRED`, `ERROR_BOUNDARY_TRIGGERED` - Errors
+
+**Environment Variables:**
+```bash
+# Google Analytics 4
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# PostHog
+NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxxxxxxxxx
+NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+```
+
+**Behavior by Environment:**
+- **Development**: Console provider only (styled logs)
+- **Production**: GA + PostHog (if configured)
+- **Cookie Consent**: Analytics provider only initializes after user accepts cookies
+
+**Adding Custom Events:**
+1. Add event name to `AnalyticsEvents` in `src/lib/analytics/events.ts`
+2. Add type-safe properties to `EventProperties` interface
+3. Use `track(AnalyticsEvents.YOUR_EVENT, { ...props })`
+
+**Adding New Providers:**
+1. Create provider in `src/lib/analytics/providers/`
+2. Implement `AnalyticsProvider` interface
+3. Add to `AnalyticsProvider` component initialization

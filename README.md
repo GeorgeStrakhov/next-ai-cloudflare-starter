@@ -15,6 +15,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 - 🖼️ **Image transformations** via Cloudflare
 - 🤖 **Replicate AI** integration for image generation
 - 🧠 **OpenRouter LLM** integration with AI SDK (chatbot with GPT, Gemini, Claude)
+- 📊 **Analytics** with Google Analytics + PostHog support (privacy-first, cookie consent integrated)
 - 🚀 **GitHub Actions** CI/CD pipeline
 - 🌍 **Three-environment setup**: Local → Staging → Production
 - 📜 **Legal pages** (Privacy Policy & Terms of Service) with MDX support
@@ -101,6 +102,7 @@ Visit http://localhost:3000
 | Storage        | Cloudflare R2 (S3-compatible) |
 | AI Images      | Replicate                     |
 | AI LLM         | OpenRouter + AI SDK           |
+| Analytics      | Google Analytics + PostHog    |
 | Styling        | Tailwind CSS v4               |
 | UI Components  | shadcn/ui + Radix UI          |
 | Content        | MDX (for legal pages)         |
@@ -196,6 +198,7 @@ src/
 ├── lib/
 │   ├── config.ts             # 🎯 Central configuration
 │   ├── auth.ts               # Auth setup
+│   ├── analytics/            # Analytics tracking
 │   ├── email/                # Email templates
 │   └── services/             # Service layers
 └── styles/
@@ -244,6 +247,13 @@ export default async function DashboardPage() {
 |-----------------------|--------------------------------|
 | `REPLICATE_API_KEY`   | AI image generation (optional) |
 | `OPENROUTER_API_KEY`  | LLM chatbot (optional)         |
+
+### Optional (Analytics)
+| Variable                       | Description                    |
+|--------------------------------|--------------------------------|
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`| Google Analytics 4 ID          |
+| `NEXT_PUBLIC_POSTHOG_KEY`      | PostHog project key            |
+| `NEXT_PUBLIC_POSTHOG_HOST`     | PostHog host URL               |
 
 ### Recommended
 | Variable                      | Description                 |
@@ -354,6 +364,7 @@ Built with amazing open source tools:
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [MDX](https://mdxjs.com/)
+- [PostHog](https://posthog.com/)
 
 ---
 
