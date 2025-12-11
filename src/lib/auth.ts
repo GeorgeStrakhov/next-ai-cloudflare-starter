@@ -7,6 +7,7 @@ import * as schema from "@/db/schema";
 import { createMagicLinkEmail } from "@/lib/email/templates/magic-link";
 import { sendEmail } from "@/lib/services/email/email";
 import { appConfig, authConfig } from "@/lib/config";
+import { canSignIn } from "@/lib/access-control";
 
 /**
  * Get database instance from Cloudflare context
@@ -35,6 +36,15 @@ export async function createAuth() {
     plugins: [
       magicLink({
         sendMagicLink: async ({ email, url }) => {
+          // Check if email is allowed to sign in
+          const accessCheck = await canSignIn(email);
+          if (!accessCheck.allowed) {
+            throw new Error(
+              accessCheck.reason ||
+                "This email is not authorized to sign in."
+            );
+          }
+
           const emailTemplate = createMagicLinkEmail({
             email,
             url,
