@@ -12,6 +12,9 @@ Sentry.init({
   // Only enable Sentry if DSN is provided
   enabled: !!SENTRY_DSN,
 
+  // Enable structured logging to Sentry
+  enableLogs: true,
+
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1.0,
 
@@ -22,11 +25,9 @@ Sentry.init({
   replaysOnErrorSampleRate: 0,
   replaysSessionSampleRate: 0,
 
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
-  // integrations: [
-  //   Sentry.replayIntegration({
-  //     maskAllText: true,
-  //     blockAllMedia: true,
-  //   }),
-  // ],
+  integrations: [
+    // Capture console.warn and console.error as logs in Sentry
+    // Helps debug what happened before an error occurred
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+  ],
 });

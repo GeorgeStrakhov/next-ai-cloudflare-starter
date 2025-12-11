@@ -12,12 +12,17 @@ Sentry.init({
   // Only enable Sentry if DSN is provided
   enabled: !!SENTRY_DSN,
 
+  // Enable structured logging to Sentry
+  enableLogs: true,
+
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1.0,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
-  // Uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: process.env.NODE_ENV === 'development',
+  integrations: [
+    // Capture console.warn and console.error as logs in Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+  ],
 });
