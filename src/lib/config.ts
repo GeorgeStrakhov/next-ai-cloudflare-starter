@@ -67,10 +67,14 @@ export const features = {
  *
  * Falls back to NODE_ENV if not set
  */
+// Cast to string to avoid type narrowing issues with Cloudflare-generated types
+const appEnv = process.env.NEXT_PUBLIC_APP_ENV as string | undefined;
+const nodeEnv = process.env.NODE_ENV as string | undefined;
+
 export const env = {
-  current: (process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV || "development") as "development" | "staging" | "production",
-  isDevelopment: (process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV) === "development",
-  isStaging: process.env.NEXT_PUBLIC_APP_ENV === "staging",
-  isProduction: process.env.NEXT_PUBLIC_APP_ENV === "production" ||
-                (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_APP_ENV !== "staging"),
+  current: (appEnv || nodeEnv || "development") as "development" | "staging" | "production",
+  isDevelopment: (appEnv || nodeEnv) === "development",
+  isStaging: appEnv === "staging",
+  isProduction: appEnv === "production" ||
+                (nodeEnv === "production" && appEnv !== "staging"),
 } as const;

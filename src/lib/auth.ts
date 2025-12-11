@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { APIError } from "better-call";
 import * as schema from "@/db/schema";
 import { createMagicLinkEmail } from "@/lib/email/templates/magic-link";
 import { sendEmail } from "@/lib/services/email/email";
@@ -39,10 +40,11 @@ export async function createAuth() {
           // Check if email is allowed to sign in
           const accessCheck = await canSignIn(email);
           if (!accessCheck.allowed) {
-            throw new Error(
-              accessCheck.reason ||
-                "This email is not authorized to sign in."
-            );
+            throw new APIError("FORBIDDEN", {
+              message:
+                accessCheck.reason ||
+                "This email is not authorized to sign in.",
+            });
           }
 
           const emailTemplate = createMagicLinkEmail({

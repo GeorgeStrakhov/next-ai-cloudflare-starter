@@ -1,5 +1,5 @@
-// This file configures the initialization of Sentry on the client.
-// The config you add here will be used whenever a users loads a page in their browser.
+// This file configures client-side instrumentation (Sentry).
+// https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
@@ -31,3 +31,6 @@ Sentry.init({
     Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
   ],
 });
+
+// Required for Next.js navigation instrumentation
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

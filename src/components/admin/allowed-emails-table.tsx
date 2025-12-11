@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -38,7 +37,6 @@ interface AllowedEmailsTableProps {
 }
 
 export function AllowedEmailsTable({ initialEmails }: AllowedEmailsTableProps) {
-  const router = useRouter();
   const [emails, setEmails] = useState(initialEmails);
   const [search, setSearch] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -75,8 +73,16 @@ export function AllowedEmailsTable({ initialEmails }: AllowedEmailsTableProps) {
         throw new Error(data.error || "Failed to add email");
       }
 
-      // Refresh to get updated list with createdAt
-      router.refresh();
+      // Update local state with new email
+      setEmails((prev) => [
+        ...prev,
+        {
+          email: data.email!,
+          note: newNote || null,
+          createdAt: new Date(),
+          createdBy: null,
+        },
+      ]);
       setNewEmail("");
       setNewNote("");
       toast.success(`${data.email} added to whitelist`);
@@ -108,7 +114,6 @@ export function AllowedEmailsTable({ initialEmails }: AllowedEmailsTableProps) {
 
       setEmails((prev) => prev.filter((e) => e.email !== deleteEmail));
       toast.success(`${deleteEmail} removed from whitelist`);
-      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to remove email"

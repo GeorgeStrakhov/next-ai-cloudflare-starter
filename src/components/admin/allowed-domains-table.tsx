@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -40,7 +39,6 @@ interface AllowedDomainsTableProps {
 export function AllowedDomainsTable({
   initialDomains,
 }: AllowedDomainsTableProps) {
-  const router = useRouter();
   const [domains, setDomains] = useState(initialDomains);
   const [search, setSearch] = useState("");
   const [newDomain, setNewDomain] = useState("");
@@ -80,8 +78,16 @@ export function AllowedDomainsTable({
         throw new Error(data.error || "Failed to add domain");
       }
 
-      // Refresh to get updated list with createdAt
-      router.refresh();
+      // Update local state with new domain
+      setDomains((prev) => [
+        ...prev,
+        {
+          domain: data.domain!,
+          note: newNote || null,
+          createdAt: new Date(),
+          createdBy: null,
+        },
+      ]);
       setNewDomain("");
       setNewNote("");
       toast.success(`@${data.domain} added to whitelist`);
@@ -113,7 +119,6 @@ export function AllowedDomainsTable({
 
       setDomains((prev) => prev.filter((d) => d.domain !== deleteDomain));
       toast.success(`@${deleteDomain} removed from whitelist`);
-      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to remove domain"

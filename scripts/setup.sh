@@ -241,12 +241,16 @@ prompt "Admin email (for initial admin access)" "$EMAIL_FROM" ADMIN_EMAIL
 echo ""
 print_info "Authentication Mode"
 echo "Choose who can sign in to your application:"
-echo "  • open - Anyone with a valid email can sign in (default)"
-echo "  • restricted - Only whitelisted emails/domains can sign in"
 echo ""
-prompt "Auth mode (open or restricted)" "open" AUTH_MODE
 
-# Validate auth mode
+AUTH_MODE_OPTIONS=(
+    "open - Anyone with a valid email can sign in (Recommended)"
+    "restricted - Only whitelisted emails/domains can sign in"
+)
+AUTH_MODE_SELECTION=$(choose "Select authentication mode:" "${AUTH_MODE_OPTIONS[@]}")
+AUTH_MODE=$(echo "$AUTH_MODE_SELECTION" | cut -d' ' -f1)
+
+# Validate auth mode (fallback)
 if [ "$AUTH_MODE" != "open" ] && [ "$AUTH_MODE" != "restricted" ]; then
     print_warning "Invalid auth mode '$AUTH_MODE', defaulting to 'open'"
     AUTH_MODE="open"
@@ -1392,6 +1396,10 @@ gh secret set R2_ACCESS_KEY_ID_PRODUCTION --body "${R2_ACCESS_KEY}"
 gh secret set R2_SECRET_ACCESS_KEY_PRODUCTION --body "${R2_SECRET_KEY}"
 gh secret set REPLICATE_API_KEY --body "${REPLICATE_KEY}"
 gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}"
+gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}"
+gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}"
+gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}"
+gh secret set SENTRY_DSN --body "${SENTRY_DSN}"
 
 # IMPORTANT NOTES:
 # - CLOUDFLARE_API_TOKEN is your main Cloudflare API token (same one used for setup)
@@ -1399,6 +1407,7 @@ gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}"
 # - BETTER_AUTH_SECRET values are DIFFERENT for staging and production (security best practice)
 # - R2 credentials are DIFFERENT for staging and production buckets
 # - POSTMARK_API_KEY, EMAIL_FROM, REPLICATE_API_KEY, and OPENROUTER_API_KEY are shared across environments
+# - Analytics/Sentry secrets are optional - leave empty to disable those features
 # - These secrets are required for GitHub Actions deployments
 # - Never commit this file to version control (it's in .gitignore)
 
@@ -1417,6 +1426,10 @@ R2_ACCESS_KEY_ID_PRODUCTION=${R2_ACCESS_KEY}
 R2_SECRET_ACCESS_KEY_PRODUCTION=${R2_SECRET_KEY}
 REPLICATE_API_KEY=${REPLICATE_KEY}
 OPENROUTER_API_KEY=${OPENROUTER_KEY}
+GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
+POSTHOG_KEY=${POSTHOG_KEY}
+POSTHOG_HOST=${POSTHOG_HOST}
+SENTRY_DSN=${SENTRY_DSN}
 EOF
 
 print_success "GitHub secrets helper created: .github-secrets-setup.txt"
@@ -1450,7 +1463,7 @@ if [ "$GIT_INITIALIZED" = true ]; then
 
                 # Ask for repo visibility
                 REPO_VISIBILITY="private"
-                if confirm "Make repository public? (default: private)"; then
+                if ! confirm "Keep repository private?"; then
                     REPO_VISIBILITY="public"
                 fi
 
@@ -1517,6 +1530,10 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     gh secret set R2_SECRET_ACCESS_KEY_PRODUCTION --body "${R2_SECRET_KEY}" 2>/dev/null
                     gh secret set REPLICATE_API_KEY --body "${REPLICATE_KEY}" 2>/dev/null
                     gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}" 2>/dev/null
+                    gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}" 2>/dev/null
+                    gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}" 2>/dev/null
+                    gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}" 2>/dev/null
+                    gh secret set SENTRY_DSN --body "${SENTRY_DSN}" 2>/dev/null
                     print_success "All GitHub secrets configured"
 
                     echo ""
@@ -1699,7 +1716,7 @@ echo -e "   • Copy/paste the gh secret commands to your terminal"
 echo ""
 echo -e "   ${GREEN}Option B - Manual:${NC}"
 echo -e "   • Go to your repo → Settings → Secrets and variables → Actions"
-echo -e "   • Add these 12 secrets from ${BLUE}.github-secrets-setup.txt${NC}:"
+echo -e "   • Add these 16 secrets from ${BLUE}.github-secrets-setup.txt${NC}:"
 echo "     - CLOUDFLARE_API_TOKEN (your main Cloudflare API token)"
 echo "     - CLOUDFLARE_ACCOUNT_ID"
 echo "     - BETTER_AUTH_SECRET_STAGING"
@@ -1712,6 +1729,10 @@ echo "     - R2_ACCESS_KEY_ID_PRODUCTION"
 echo "     - R2_SECRET_ACCESS_KEY_PRODUCTION"
 echo "     - REPLICATE_API_KEY"
 echo "     - OPENROUTER_API_KEY"
+echo "     - GA_MEASUREMENT_ID (optional)"
+echo "     - POSTHOG_KEY (optional)"
+echo "     - POSTHOG_HOST (optional)"
+echo "     - SENTRY_DSN (optional)"
 echo ""
 
 echo -e "${YELLOW}4. Configure custom domains (in Cloudflare Dashboard):${NC}"

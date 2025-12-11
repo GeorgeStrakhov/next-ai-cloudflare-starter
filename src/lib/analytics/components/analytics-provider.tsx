@@ -7,14 +7,14 @@ import { analytics } from "../tracker";
 import { AnalyticsEvents } from "../events";
 import { posthogProvider, consoleProvider } from "../providers";
 import { useSession } from "@/lib/auth-client";
+import { env } from "@/lib/config";
 
 // Environment variables
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-const APP_ENV = process.env.NEXT_PUBLIC_APP_ENV || "development";
 
-const isDev = APP_ENV === "development";
+const isDev = env.isDevelopment;
 const hasGA = !!GA_MEASUREMENT_ID;
 const hasPostHog = !!POSTHOG_KEY && !!POSTHOG_HOST;
 

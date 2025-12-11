@@ -315,7 +315,7 @@ The setup script handles most of these automatically, but if setting up manually
   - [ ] Update project name in `wrangler.jsonc`, `package.json`, and scripts
   - [ ] Create D1 databases (staging + production)
   - [ ] Create R2 buckets (staging + production)
-  - [ ] Set GitHub secrets for CI/CD (12 secrets)
+  - [ ] Set GitHub secrets for CI/CD (16 secrets)
   - [ ] Configure custom domains in Cloudflare
   - [ ] Update legal pages with your company info
 - [ ] Verify email sender in Postmark
