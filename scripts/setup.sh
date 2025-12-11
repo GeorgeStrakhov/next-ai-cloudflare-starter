@@ -414,6 +414,15 @@ if [ -n "$POSTHOG_KEY" ]; then
 fi
 
 echo ""
+
+# Sentry DSN (optional)
+print_info "Sentry (Optional - for error tracking and alerting)"
+echo "Get from: https://sentry.io/ → Project Settings → Client Keys (DSN)"
+echo "Note: Same DSN is used for both client and server"
+echo ""
+prompt "Sentry DSN (or press Enter to skip)" "" SENTRY_DSN
+
+echo ""
 print_success "Credentials collected! Starting automation..."
 echo ""
 sleep 2
@@ -903,6 +912,12 @@ if [ -n "$POSTHOG_KEY" ]; then
     sed -i.tmp "s|\"NEXT_PUBLIC_POSTHOG_HOST\": \"\"|\"NEXT_PUBLIC_POSTHOG_HOST\": \"${POSTHOG_HOST}\"|" wrangler.jsonc
 fi
 
+# Update Sentry vars (if provided)
+if [ -n "$SENTRY_DSN" ]; then
+    sed -i.tmp "s|\"SENTRY_DSN\": \"\"|\"SENTRY_DSN\": \"${SENTRY_DSN}\"|" wrangler.jsonc
+    sed -i.tmp "s|\"NEXT_PUBLIC_SENTRY_DSN\": \"\"|\"NEXT_PUBLIC_SENTRY_DSN\": \"${SENTRY_DSN}\"|" wrangler.jsonc
+fi
+
 # Clean up temp files
 rm wrangler.jsonc.tmp
 
@@ -1073,6 +1088,11 @@ NEXT_PUBLIC_S3_ENDPOINT=https://cdn-staging.${PROD_DOMAIN}
 NEXT_PUBLIC_GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
 NEXT_PUBLIC_POSTHOG_KEY=${POSTHOG_KEY}
 NEXT_PUBLIC_POSTHOG_HOST=${POSTHOG_HOST}
+
+# Sentry (optional - leave empty to disable in local dev)
+# Errors won't be sent to Sentry without a DSN
+SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DSN=
 
 # Server-side variables (for next dev only, also in .dev.vars for wrangler)
 EMAIL_FROM=${EMAIL_FROM}
