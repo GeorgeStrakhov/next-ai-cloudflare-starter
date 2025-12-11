@@ -17,14 +17,14 @@
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate:local": "wrangler d1 migrations apply my-app-db --local",
+		"db:migrate:local": "wrangler d1 migrations apply my-app-db-prod --local",
 		"db:studio": "drizzle-kit studio",
 		"db:studio:stage": "./scripts/db-studio.sh staging",
 		"db:studio:prod": "./scripts/db-studio.sh production",
 		"deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
 		"deploy:production": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"db:migrate:staging": "wrangler d1 migrations apply my-app-db-staging --remote --env staging",
-		"db:migrate:production": "wrangler d1 migrations apply my-app-db --remote"
+		"db:migrate:production": "wrangler d1 migrations apply my-app-db-prod --remote"
 	},
 	"dependencies": {
 		"@ai-sdk/react": "^2.0.109",

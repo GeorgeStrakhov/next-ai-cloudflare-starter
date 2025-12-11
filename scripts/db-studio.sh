@@ -20,7 +20,7 @@ if [ "$ENV" = "staging" ]; then
   CONFIG="drizzle.config.staging.ts"
   SNAPSHOT_FILE=".db-snapshots/staging.db"
 elif [ "$ENV" = "production" ]; then
-  DB_NAME="my-app-db"
+  DB_NAME="my-app-db-prod"
   CONFIG="drizzle.config.production.ts"
   SNAPSHOT_FILE=".db-snapshots/production.db"
 else

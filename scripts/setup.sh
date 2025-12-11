@@ -403,13 +403,13 @@ else
     print_header "🗄️  Creating Cloudflare D1 Databases"
 
     print_info "Creating production database..."
-PROD_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db" 2>&1 || true)
+PROD_DB_OUTPUT=$(npx wrangler d1 create "${PROJECT_NAME_LOWER}-db-prod" 2>&1 || true)
 
 if echo "$PROD_DB_OUTPUT" | grep -q "already exists"; then
-    print_warning "Database '${PROJECT_NAME_LOWER}-db' already exists"
+    print_warning "Database '${PROJECT_NAME_LOWER}-db-prod' already exists"
 
     # Try to get existing database ID
-    EXISTING_DB=$(npx wrangler d1 list 2>&1 | grep "${PROJECT_NAME_LOWER}-db" | head -1)
+    EXISTING_DB=$(npx wrangler d1 list 2>&1 | grep "${PROJECT_NAME_LOWER}-db-prod" | head -1)
     PROD_DB_ID=$(echo "$EXISTING_DB" | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
 
     if [ -n "$PROD_DB_ID" ]; then
@@ -419,7 +419,7 @@ if echo "$PROD_DB_OUTPUT" | grep -q "already exists"; then
         else
             print_error "Cannot proceed without a production database"
             print_info "Please either:"
-            echo "  1. Delete the existing database: npx wrangler d1 delete ${PROJECT_NAME_LOWER}-db"
+            echo "  1. Delete the existing database: npx wrangler d1 delete ${PROJECT_NAME_LOWER}-db-prod"
             echo "  2. Choose a different project name when running this script"
             exit 1
         fi
@@ -832,7 +832,7 @@ sed -i.tmp "s/\"name\": \"my-app-production\"/\"name\": \"${PROJECT_NAME_LOWER}-
 sed -i.tmp "s/\"name\": \"my-app-staging\"/\"name\": \"${PROJECT_NAME_LOWER}-staging\"/" wrangler.jsonc
 
 # Update production database (use lowercase for wrangler)
-sed -i.tmp "s/\"database_name\": \"my-app-db\"/\"database_name\": \"${PROJECT_NAME_LOWER}-db\"/" wrangler.jsonc
+sed -i.tmp "s/\"database_name\": \"my-app-db-prod\"/\"database_name\": \"${PROJECT_NAME_LOWER}-db-prod\"/" wrangler.jsonc
 sed -i.tmp "s/\"database_id\": \"YOUR_PRODUCTION_DATABASE_ID\"/\"database_id\": \"${PROD_DB_ID}\"/" wrangler.jsonc
 
 # Update staging database (use lowercase for wrangler)
@@ -878,8 +878,8 @@ sed -i.tmp "s/\"name\": \"cloudflare-nextjs-starter\"/\"name\": \"${PROJECT_NAME
 sed -i.tmp "s/\"description\": \"Next.js 15 starter template for Cloudflare Workers with D1, Drizzle ORM, and Better Auth\"/\"description\": \"${APP_DESCRIPTION}\"/" package.json
 
 # Update database migration scripts (use lowercase for wrangler database names)
-sed -i.tmp "s/my-app-db-staging/${PROJECT_NAME_LOWER}-db-staging/" package.json
-sed -i.tmp "s/my-app-db/${PROJECT_NAME_LOWER}-db/g" package.json
+sed -i.tmp "s/my-app-db-staging/${PROJECT_NAME_LOWER}-db-staging/g" package.json
+sed -i.tmp "s/my-app-db-prod/${PROJECT_NAME_LOWER}-db-prod/g" package.json
 
 rm package.json.tmp
 
@@ -891,8 +891,8 @@ print_info "Updating scripts/db-studio.sh..."
 cp scripts/db-studio.sh scripts/db-studio.sh.backup
 
 # Use lowercase for wrangler database names
-sed -i.tmp "s/my-app-db-staging/${PROJECT_NAME_LOWER}-db-staging/" scripts/db-studio.sh
-sed -i.tmp "s/my-app-db/${PROJECT_NAME_LOWER}-db/g" scripts/db-studio.sh
+sed -i.tmp "s/my-app-db-staging/${PROJECT_NAME_LOWER}-db-staging/g" scripts/db-studio.sh
+sed -i.tmp "s/my-app-db-prod/${PROJECT_NAME_LOWER}-db-prod/g" scripts/db-studio.sh
 
 rm scripts/db-studio.sh.tmp
 
@@ -1193,7 +1193,7 @@ elif command -v git &> /dev/null; then
         git commit -q -m "Initial commit: ${PROJECT_NAME} setup
 
 Project configured with:
-- Database: ${PROJECT_NAME_LOWER}-db (staging + production)
+- Databases: ${PROJECT_NAME_LOWER}-db-prod + ${PROJECT_NAME_LOWER}-db-staging
 - R2 Storage: ${PROJECT_NAME_LOWER}-storage (staging + production)
 - Domain: ${PROD_DOMAIN}
 - CDN: ${CDN_DOMAIN}

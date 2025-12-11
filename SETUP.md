@@ -128,7 +128,7 @@ Replace `my-app` with your project name in these files:
 
 1. **`wrangler.jsonc`**:
    - Worker names: `my-app-production`, `my-app-staging`
-   - Database names: `my-app-db`, `my-app-db-staging`
+   - Database names: `my-app-db-prod`, `my-app-db-staging`
 
 2. **`package.json`**:
    - `name`: Package name
@@ -235,7 +235,7 @@ You need two databases: one for staging, one for production.
 npx wrangler login
 
 # Create production database
-npx wrangler d1 create my-app-db
+npx wrangler d1 create my-app-db-prod
 
 # Create staging database
 npx wrangler d1 create my-app-db-staging
@@ -252,7 +252,7 @@ Replace the placeholder database IDs:
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "my-app-db",
+      "database_name": "my-app-db-prod",
       "database_id": "abc123...", // ← Paste your production DB ID
       "migrations_dir": "drizzle"
     }
@@ -420,7 +420,7 @@ Add these secrets:
 
 Edit `.github/workflows/deploy.yml`:
 
-1. Update database names (search for `my-app-db`)
+1. Update database names (search for `my-app-db-prod` and `my-app-db-staging`)
 2. Update environment URLs in the workflow
 
 ### 3. Create Deployment Branches
@@ -577,7 +577,7 @@ If migrations fail:
 3. Check database exists: `npx wrangler d1 list`
 4. Try applying migrations manually:
    ```bash
-   npx wrangler d1 migrations apply my-app-db --remote
+   npx wrangler d1 migrations apply my-app-db-prod --remote
    ```
 
 ### Email Not Sending

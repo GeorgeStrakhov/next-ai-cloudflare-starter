@@ -49,11 +49,11 @@
 	],
 
 	// D1 Database binding for production
-	// Create with: npx wrangler d1 create my-app-db
+	// Create with: npx wrangler d1 create my-app-db-prod
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "my-app-db",
+			"database_name": "my-app-db-prod",
 			"database_id": "YOUR_PRODUCTION_DATABASE_ID",
 			"migrations_dir": "drizzle"
 		}

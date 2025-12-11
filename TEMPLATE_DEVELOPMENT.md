@@ -228,7 +228,7 @@ After testing, you may have test databases and buckets in Cloudflare:
 ```bash
 # List and delete test D1 databases
 npx wrangler d1 list
-npx wrangler d1 delete test-project-db
+npx wrangler d1 delete test-project-db-prod
 npx wrangler d1 delete test-project-db-staging
 
 # List and delete test R2 buckets
