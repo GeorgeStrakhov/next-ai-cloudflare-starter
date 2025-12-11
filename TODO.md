@@ -1,5 +1,9 @@
 ##  FIXES:
 
+- default to private (github repo)
+- nicer choice for whether open sign up or not
+- gh secrets missing from setting script and secrets file
+
 ## LATER IMPROVEMENTS:
 
 - add logging and alerting (investigate best setup on cloudflare) OR sentry?
