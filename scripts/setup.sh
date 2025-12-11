@@ -384,6 +384,36 @@ if [ -z "$OPENROUTER_KEY" ]; then
 fi
 
 echo ""
+
+# Google Analytics Measurement ID (optional)
+print_info "Google Analytics 4 (Optional - for web analytics)"
+echo "Get from: https://analytics.google.com/ → Admin → Data Streams"
+echo "Format: G-XXXXXXXXXX"
+echo ""
+prompt "GA4 Measurement ID (or press Enter to skip)" "" GA_MEASUREMENT_ID
+
+echo ""
+
+# PostHog Key (optional)
+print_info "PostHog (Optional - for product analytics)"
+echo "Get from: https://app.posthog.com/ → Project Settings → Project API Key"
+echo ""
+prompt "PostHog Project API Key (or press Enter to skip)" "" POSTHOG_KEY
+
+# If PostHog key provided, ask for host
+POSTHOG_HOST=""
+if [ -n "$POSTHOG_KEY" ]; then
+    echo ""
+    print_info "PostHog Host (where is your PostHog project hosted?)"
+    echo "Check your PostHog dashboard URL or project settings"
+    echo "Options:"
+    echo "  • https://us.i.posthog.com  (US Cloud)"
+    echo "  • https://eu.i.posthog.com  (EU Cloud)"
+    echo ""
+    prompt "PostHog Host" "https://us.i.posthog.com" POSTHOG_HOST
+fi
+
+echo ""
 print_success "Credentials collected! Starting automation..."
 echo ""
 sleep 2
@@ -864,6 +894,15 @@ sed -i.tmp "s|\"NEXT_PUBLIC_APP_URL\": \"https://staging.your-domain.com\"|\"NEX
 sed -i.tmp "s/\"NEXT_PUBLIC_APP_NAME\": \"My App\"/\"NEXT_PUBLIC_APP_NAME\": \"${APP_NAME}\"/" wrangler.jsonc
 sed -i.tmp "s/\"NEXT_PUBLIC_APP_DESCRIPTION\": \"My awesome application\"/\"NEXT_PUBLIC_APP_DESCRIPTION\": \"${APP_DESCRIPTION}\"/" wrangler.jsonc
 
+# Update analytics vars (if provided)
+if [ -n "$GA_MEASUREMENT_ID" ]; then
+    sed -i.tmp "s/\"NEXT_PUBLIC_GA_MEASUREMENT_ID\": \"\"/\"NEXT_PUBLIC_GA_MEASUREMENT_ID\": \"${GA_MEASUREMENT_ID}\"/" wrangler.jsonc
+fi
+if [ -n "$POSTHOG_KEY" ]; then
+    sed -i.tmp "s/\"NEXT_PUBLIC_POSTHOG_KEY\": \"\"/\"NEXT_PUBLIC_POSTHOG_KEY\": \"${POSTHOG_KEY}\"/" wrangler.jsonc
+    sed -i.tmp "s|\"NEXT_PUBLIC_POSTHOG_HOST\": \"\"|\"NEXT_PUBLIC_POSTHOG_HOST\": \"${POSTHOG_HOST}\"|" wrangler.jsonc
+fi
+
 # Clean up temp files
 rm wrangler.jsonc.tmp
 
@@ -1029,6 +1068,11 @@ NEXT_PUBLIC_SUPPORT_EMAIL=${EMAIL_FROM}
 
 # R2 Storage (Public CDN URL - uses staging for local dev)
 NEXT_PUBLIC_S3_ENDPOINT=https://cdn-staging.${PROD_DOMAIN}
+
+# Analytics (optional - leave empty to disable)
+NEXT_PUBLIC_GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
+NEXT_PUBLIC_POSTHOG_KEY=${POSTHOG_KEY}
+NEXT_PUBLIC_POSTHOG_HOST=${POSTHOG_HOST}
 
 # Server-side variables (for next dev only, also in .dev.vars for wrangler)
 EMAIL_FROM=${EMAIL_FROM}

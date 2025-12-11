@@ -32,7 +32,8 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 # PostHog (optional)
 NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxxxxxxxxx
-NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+# Must match your project region: https://us.i.posthog.com (US) or https://eu.i.posthog.com (EU)
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 # Environment (affects which providers load)
 NEXT_PUBLIC_APP_ENV=development  # or "staging" or "production"
