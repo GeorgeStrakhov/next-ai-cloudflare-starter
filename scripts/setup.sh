@@ -418,15 +418,6 @@ if [ -n "$POSTHOG_KEY" ]; then
 fi
 
 echo ""
-
-# Sentry DSN (optional)
-print_info "Sentry (Optional - for error tracking and alerting)"
-echo "Get from: https://sentry.io/ → Project Settings → Client Keys (DSN)"
-echo "Note: Same DSN is used for both client and server"
-echo ""
-prompt "Sentry DSN (or press Enter to skip)" "" SENTRY_DSN
-
-echo ""
 print_success "Credentials collected! Starting automation..."
 echo ""
 sleep 2
@@ -916,12 +907,6 @@ if [ -n "$POSTHOG_KEY" ]; then
     sed -i.tmp "s|\"NEXT_PUBLIC_POSTHOG_HOST\": \"\"|\"NEXT_PUBLIC_POSTHOG_HOST\": \"${POSTHOG_HOST}\"|" wrangler.jsonc
 fi
 
-# Update Sentry vars (if provided)
-if [ -n "$SENTRY_DSN" ]; then
-    sed -i.tmp "s|\"SENTRY_DSN\": \"\"|\"SENTRY_DSN\": \"${SENTRY_DSN}\"|" wrangler.jsonc
-    sed -i.tmp "s|\"NEXT_PUBLIC_SENTRY_DSN\": \"\"|\"NEXT_PUBLIC_SENTRY_DSN\": \"${SENTRY_DSN}\"|" wrangler.jsonc
-fi
-
 # Clean up temp files
 rm wrangler.jsonc.tmp
 
@@ -1092,11 +1077,6 @@ NEXT_PUBLIC_S3_ENDPOINT=https://cdn-staging.${PROD_DOMAIN}
 NEXT_PUBLIC_GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
 NEXT_PUBLIC_POSTHOG_KEY=${POSTHOG_KEY}
 NEXT_PUBLIC_POSTHOG_HOST=${POSTHOG_HOST}
-
-# Sentry (optional - leave empty to disable in local dev)
-# Errors won't be sent to Sentry without a DSN
-SENTRY_DSN=
-NEXT_PUBLIC_SENTRY_DSN=
 
 # Server-side variables (for next dev only, also in .dev.vars for wrangler)
 EMAIL_FROM=${EMAIL_FROM}
@@ -1399,7 +1379,6 @@ gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}"
 gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}"
 gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}"
 gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}"
-gh secret set SENTRY_DSN --body "${SENTRY_DSN}"
 
 # IMPORTANT NOTES:
 # - CLOUDFLARE_API_TOKEN is your main Cloudflare API token (same one used for setup)
@@ -1407,7 +1386,7 @@ gh secret set SENTRY_DSN --body "${SENTRY_DSN}"
 # - BETTER_AUTH_SECRET values are DIFFERENT for staging and production (security best practice)
 # - R2 credentials are DIFFERENT for staging and production buckets
 # - POSTMARK_API_KEY, EMAIL_FROM, REPLICATE_API_KEY, and OPENROUTER_API_KEY are shared across environments
-# - Analytics/Sentry secrets are optional - leave empty to disable those features
+# - Analytics secrets are optional - leave empty to disable those features
 # - These secrets are required for GitHub Actions deployments
 # - Never commit this file to version control (it's in .gitignore)
 
@@ -1429,7 +1408,6 @@ OPENROUTER_API_KEY=${OPENROUTER_KEY}
 GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
 POSTHOG_KEY=${POSTHOG_KEY}
 POSTHOG_HOST=${POSTHOG_HOST}
-SENTRY_DSN=${SENTRY_DSN}
 EOF
 
 print_success "GitHub secrets helper created: .github-secrets-setup.txt"
@@ -1533,7 +1511,6 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}" 2>/dev/null
                     gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}" 2>/dev/null
                     gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}" 2>/dev/null
-                    gh secret set SENTRY_DSN --body "${SENTRY_DSN}" 2>/dev/null
                     print_success "All GitHub secrets configured"
 
                     echo ""
@@ -1716,7 +1693,7 @@ echo -e "   • Copy/paste the gh secret commands to your terminal"
 echo ""
 echo -e "   ${GREEN}Option B - Manual:${NC}"
 echo -e "   • Go to your repo → Settings → Secrets and variables → Actions"
-echo -e "   • Add these 16 secrets from ${BLUE}.github-secrets-setup.txt${NC}:"
+echo -e "   • Add these 15 secrets from ${BLUE}.github-secrets-setup.txt${NC}:"
 echo "     - CLOUDFLARE_API_TOKEN (your main Cloudflare API token)"
 echo "     - CLOUDFLARE_ACCOUNT_ID"
 echo "     - BETTER_AUTH_SECRET_STAGING"
@@ -1732,7 +1709,6 @@ echo "     - OPENROUTER_API_KEY"
 echo "     - GA_MEASUREMENT_ID (optional)"
 echo "     - POSTHOG_KEY (optional)"
 echo "     - POSTHOG_HOST (optional)"
-echo "     - SENTRY_DSN (optional)"
 echo ""
 
 echo -e "${YELLOW}4. Configure custom domains (in Cloudflare Dashboard):${NC}"

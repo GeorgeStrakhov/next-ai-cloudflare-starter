@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { headers } from "next/headers";
 import { createAuth } from "@/lib/auth";
 import { ContactForm } from "@/components/contact-form";

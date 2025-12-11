@@ -34,6 +34,9 @@
 	"observability": {
 		"enabled": true
 	},
+	// Disable keep_names to fix "__name is not defined" error with next-themes
+	// See: https://opennext.js.org/cloudflare/howtos/keep_names
+	"keep_names": false,
 
 	// Custom domain routes (update with your domains)
 	// After adding domains in Cloudflare dashboard
@@ -78,9 +81,7 @@
 		"NEXT_PUBLIC_APP_DESCRIPTION": "My awesome application",
 		"NEXT_PUBLIC_GA_MEASUREMENT_ID": "",
 		"NEXT_PUBLIC_POSTHOG_KEY": "",
-		"NEXT_PUBLIC_POSTHOG_HOST": "",
-		"SENTRY_DSN": "",
-		"NEXT_PUBLIC_SENTRY_DSN": ""
+		"NEXT_PUBLIC_POSTHOG_HOST": ""
 	},
 
 	// ===========================================
@@ -127,9 +128,7 @@
 				"NEXT_PUBLIC_APP_DESCRIPTION": "My awesome application",
 				"NEXT_PUBLIC_GA_MEASUREMENT_ID": "",
 				"NEXT_PUBLIC_POSTHOG_KEY": "",
-				"NEXT_PUBLIC_POSTHOG_HOST": "",
-				"SENTRY_DSN": "",
-				"NEXT_PUBLIC_SENTRY_DSN": ""
+				"NEXT_PUBLIC_POSTHOG_HOST": ""
 			}
 		}
 	}

@@ -179,7 +179,7 @@ This project uses GitHub Actions for automated deployments:
 - **Important**: Database migrations run automatically on every deployment - no manual migration commands needed!
 - **Setup**: See `SETUP.md` for complete setup instructions
 
-### Required GitHub Secrets (16 total)
+### Required GitHub Secrets (15 total)
 The setup script can configure these automatically via GitHub CLI, or you can add them manually:
 
 **Cloudflare:**
@@ -204,11 +204,10 @@ The setup script can configure these automatically via GitHub CLI, or you can ad
 - `REPLICATE_API_KEY`: For AI image generation
 - `OPENROUTER_API_KEY`: For LLM chatbot
 
-**Analytics & Error Tracking (Shared, optional):**
+**Analytics (Shared, optional):**
 - `GA_MEASUREMENT_ID`: Google Analytics 4 measurement ID (e.g., G-XXXXXXXXXX)
 - `POSTHOG_KEY`: PostHog project API key
 - `POSTHOG_HOST`: PostHog host URL (e.g., https://us.i.posthog.com)
-- `SENTRY_DSN`: Sentry DSN for error tracking
 
 **Note**: The setup script creates R2 credentials automatically and can set all GitHub secrets via `gh` CLI.
 
