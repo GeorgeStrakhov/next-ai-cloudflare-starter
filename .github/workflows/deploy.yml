@@ -86,7 +86,7 @@ jobs:
           NEXT_PUBLIC_APP_ENV: staging
           NEXT_PUBLIC_APP_NAME: My App
           NEXT_PUBLIC_APP_DESCRIPTION: My awesome application
-          NEXT_PUBLIC_SUPPORT_EMAIL: george@move38.org
+          NEXT_PUBLIC_SUPPORT_EMAIL: hello@your-domain.com
           NEXT_PUBLIC_S3_ENDPOINT: https://cdn-staging.your-domain.com
         run: pnpm run deploy:staging
 
@@ -102,6 +102,6 @@ jobs:
           NEXT_PUBLIC_APP_ENV: production
           NEXT_PUBLIC_APP_NAME: My App
           NEXT_PUBLIC_APP_DESCRIPTION: My awesome application
-          NEXT_PUBLIC_SUPPORT_EMAIL: george@move38.org
+          NEXT_PUBLIC_SUPPORT_EMAIL: hello@your-domain.com
           NEXT_PUBLIC_S3_ENDPOINT: https://cdn.your-domain.com
         run: pnpm run deploy:production

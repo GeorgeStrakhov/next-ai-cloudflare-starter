@@ -1,5 +1,5 @@
 {
-	"name": "my-app",
+	"name": "cloudflare-nextjs-starter",
 	"version": "1.0.0",
 	"description": "Next.js 15 starter template for Cloudflare Workers with D1, Drizzle ORM, and Better Auth, Replicate, R2, OpenRouter and more.",
 	"author": "George GeorgeStrakhov",
