@@ -54,7 +54,7 @@
 		{
 			"binding": "DB",
 			"database_name": "my-app-db",
-			"database_id": "YOUR_PRODUCTION_DATABASE_ID",
+			"database_id": "placeholder-prod-db-id-00000000-0000-0000-0000-000000000000",
 			"migrations_dir": "drizzle"
 		}
 	],
@@ -99,7 +99,7 @@
 				{
 					"binding": "DB",
 					"database_name": "my-app-db-staging",
-					"database_id": "YOUR_STAGING_DATABASE_ID",
+					"database_id": "placeholder-staging-db-id-00000000-0000-0000-0000-000000000000",
 					"migrations_dir": "drizzle"
 				}
 			],

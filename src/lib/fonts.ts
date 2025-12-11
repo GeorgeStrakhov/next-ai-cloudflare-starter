@@ -44,22 +44,27 @@
  * ```
  */
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Crimson_Pro, JetBrains_Mono } from "next/font/google";
 
 // =============================================================================
 // FONT DEFINITIONS
 // =============================================================================
 // Import and configure your Google Fonts here.
-// Each font needs a unique CSS variable name (e.g., "--font-geist-sans").
+// Each font needs a unique CSS variable name (e.g., "--font-inter").
 // Browse fonts at: https://fonts.google.com
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const crimsonPro = Crimson_Pro({
+  variable: "--font-crimson",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
 });
 
@@ -69,12 +74,13 @@ const geistMono = Geist_Mono({
 // fontVariables: String of CSS variable classes to add to <body>
 // This makes the fonts available throughout the app via CSS variables.
 
-export const fontVariables = `${geistSans.variable} ${geistMono.variable}`;
+export const fontVariables = `${inter.variable} ${crimsonPro.variable} ${jetbrainsMono.variable}`;
 
 /**
  * Font CSS variable names for reference:
- * - --font-geist-sans: Geist Sans (default body/heading font)
- * - --font-geist-mono: Geist Mono (default monospace font)
+ * - --font-inter: Inter (clean sans-serif for body)
+ * - --font-crimson: Crimson Pro (elegant serif for headings)
+ * - --font-jetbrains: JetBrains Mono (developer-friendly monospace)
  *
  * These are mapped in globals.css to semantic font variables:
  * - --font-heading: Used for headings (h1, h2, etc.)

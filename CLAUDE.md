@@ -384,7 +384,22 @@ Browse fonts at: https://fonts.google.com
 **Customizing Colors:**
 
 1. **Change colors**: Edit CSS variables in `src/app/globals.css` under `:root` (light) and `.dark` (dark)
-2. **Add brand colors**: Add new variables following the pattern:
+2. **Understand OKLCH**: Colors use `oklch(L C H)` format:
+   - **L (Lightness)**: 0-1, where 0=black, 1=white
+   - **C (Chroma)**: 0-0.4, color intensity
+   - **H (Hue)**: 0-360, color wheel angle (e.g., 270=violet)
+
+3. **Contrast Rule for `-foreground` variables**:
+
+   | Background L | Foreground L | Result |
+   |--------------|--------------|--------|
+   | < 0.45 | > 0.90 | Dark bg → light text |
+   | > 0.55 | < 0.25 | Light bg → dark text |
+   | 0.45-0.55 | Avoid! | Poor contrast zone |
+
+   WCAG recommends 4.5:1 contrast ratio. Test at https://contrast.tools
+
+4. **Add brand colors**: Add new variables following the pattern:
    ```css
    /* In :root and .dark */
    --brand: oklch(0.6 0.2 250);
