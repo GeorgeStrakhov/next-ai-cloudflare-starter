@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export function CookieConsentBanner() {
-  const { consentStatus, acceptCookies, declineCookies } = useCookieConsent();
+  const { consentStatus, isHydrated, acceptCookies, declineCookies } = useCookieConsent();
 
-  // Don't show banner if consent already given or declined
-  if (consentStatus !== "pending") {
+  // Don't show banner until hydrated (prevents flash on page load)
+  // or if consent already given or declined
+  if (!isHydrated || consentStatus !== "pending") {
     return null;
   }
 

@@ -24,6 +24,7 @@ type ConsentStatus = "pending" | "accepted" | "declined";
 
 interface CookieConsentContextType {
   consentStatus: ConsentStatus;
+  isHydrated: boolean;
   acceptCookies: () => void;
   declineCookies: () => void;
   resetConsent: () => void;
@@ -93,6 +94,7 @@ export function CookieConsentProvider({ children }: CookieConsentProviderProps) 
     <CookieConsentContext.Provider
       value={{
         consentStatus,
+        isHydrated,
         acceptCookies,
         declineCookies,
         resetConsent,
