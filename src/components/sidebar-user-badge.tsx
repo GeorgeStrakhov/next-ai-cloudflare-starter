@@ -54,7 +54,7 @@ export function SidebarUserBadge({ user }: SidebarUserBadgeProps) {
     setIsLoggingOut(true);
     try {
       await authClient.signOut();
-      router.push("/sign-in");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
