@@ -1376,9 +1376,20 @@ gh secret set R2_ACCESS_KEY_ID_PRODUCTION --body "${R2_ACCESS_KEY}"
 gh secret set R2_SECRET_ACCESS_KEY_PRODUCTION --body "${R2_SECRET_KEY}"
 gh secret set REPLICATE_API_KEY --body "${REPLICATE_KEY}"
 gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}"
-gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}"
-gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}"
-gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}"
+EOF
+
+# Append analytics secrets only if provided
+if [ -n "$GA_MEASUREMENT_ID" ]; then
+    echo "gh secret set GA_MEASUREMENT_ID --body \"${GA_MEASUREMENT_ID}\"" >> .github-secrets-setup.txt
+fi
+if [ -n "$POSTHOG_KEY" ]; then
+    echo "gh secret set POSTHOG_KEY --body \"${POSTHOG_KEY}\"" >> .github-secrets-setup.txt
+fi
+if [ -n "$POSTHOG_HOST" ]; then
+    echo "gh secret set POSTHOG_HOST --body \"${POSTHOG_HOST}\"" >> .github-secrets-setup.txt
+fi
+
+cat >> .github-secrets-setup.txt << EOF
 
 # IMPORTANT NOTES:
 # - CLOUDFLARE_API_TOKEN is your main Cloudflare API token (same one used for setup)
@@ -1386,7 +1397,7 @@ gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}"
 # - BETTER_AUTH_SECRET values are DIFFERENT for staging and production (security best practice)
 # - R2 credentials are DIFFERENT for staging and production buckets
 # - POSTMARK_API_KEY, EMAIL_FROM, REPLICATE_API_KEY, and OPENROUTER_API_KEY are shared across environments
-# - Analytics secrets are optional - leave empty to disable those features
+# - Analytics secrets (GA_MEASUREMENT_ID, POSTHOG_KEY, POSTHOG_HOST) are optional
 # - These secrets are required for GitHub Actions deployments
 # - Never commit this file to version control (it's in .gitignore)
 
@@ -1405,10 +1416,18 @@ R2_ACCESS_KEY_ID_PRODUCTION=${R2_ACCESS_KEY}
 R2_SECRET_ACCESS_KEY_PRODUCTION=${R2_SECRET_KEY}
 REPLICATE_API_KEY=${REPLICATE_KEY}
 OPENROUTER_API_KEY=${OPENROUTER_KEY}
-GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
-POSTHOG_KEY=${POSTHOG_KEY}
-POSTHOG_HOST=${POSTHOG_HOST}
 EOF
+
+# Append analytics values only if provided
+if [ -n "$GA_MEASUREMENT_ID" ]; then
+    echo "GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}" >> .github-secrets-setup.txt
+fi
+if [ -n "$POSTHOG_KEY" ]; then
+    echo "POSTHOG_KEY=${POSTHOG_KEY}" >> .github-secrets-setup.txt
+fi
+if [ -n "$POSTHOG_HOST" ]; then
+    echo "POSTHOG_HOST=${POSTHOG_HOST}" >> .github-secrets-setup.txt
+fi
 
 print_success "GitHub secrets helper created: .github-secrets-setup.txt"
 print_info "This file contains all the secrets you need to add to GitHub Actions"
@@ -1508,9 +1527,10 @@ if [ "$GIT_INITIALIZED" = true ]; then
                     gh secret set R2_SECRET_ACCESS_KEY_PRODUCTION --body "${R2_SECRET_KEY}" 2>/dev/null
                     gh secret set REPLICATE_API_KEY --body "${REPLICATE_KEY}" 2>/dev/null
                     gh secret set OPENROUTER_API_KEY --body "${OPENROUTER_KEY}" 2>/dev/null
-                    gh secret set GA_MEASUREMENT_ID --body "${GA_MEASUREMENT_ID}" 2>/dev/null
-                    gh secret set POSTHOG_KEY --body "${POSTHOG_KEY}" 2>/dev/null
-                    gh secret set POSTHOG_HOST --body "${POSTHOG_HOST}" 2>/dev/null
+                    # Analytics secrets - only set if provided (truly optional)
+                    [ -n "$GA_MEASUREMENT_ID" ] && echo "${GA_MEASUREMENT_ID}" | gh secret set GA_MEASUREMENT_ID 2>/dev/null
+                    [ -n "$POSTHOG_KEY" ] && echo "${POSTHOG_KEY}" | gh secret set POSTHOG_KEY 2>/dev/null
+                    [ -n "$POSTHOG_HOST" ] && echo "${POSTHOG_HOST}" | gh secret set POSTHOG_HOST 2>/dev/null
                     print_success "All GitHub secrets configured"
 
                     echo ""

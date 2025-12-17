@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
+import { requireAuth } from "@/lib/admin";
 import { uploadFile } from "@/lib/services/s3";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: request.headers });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error) return error;
 
     // Get form data
     const formData = await request.formData();

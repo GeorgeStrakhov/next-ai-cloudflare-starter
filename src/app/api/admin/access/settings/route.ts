@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { createAuth } from "@/lib/auth";
-import { isAdmin } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin";
 import { getAuthSettings, setAuthSettings } from "@/lib/access-control";
 import type { AuthSettings } from "@/db/schema";
 
 export async function GET() {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { error } = await requireAdmin();
+    if (error) return error;
 
     const settings = await getAuthSettings();
     return NextResponse.json(settings);
@@ -32,17 +21,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { session, error } = await requireAdmin();
+    if (error) return error;
 
     const body = (await request.json()) as Partial<AuthSettings>;
     const { mode } = body;

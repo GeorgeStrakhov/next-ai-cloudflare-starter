@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
+import { requireAuth } from "@/lib/admin";
 import { generateImage } from "@/lib/services/replicate/replicate";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: request.headers });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error) return error;
 
     // Get prompt from request body
     const body = await request.json();

@@ -1,25 +1,12 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { createAuth } from "@/lib/auth";
-import { isAdmin, removeAdminEmail } from "@/lib/admin";
+import { requireAdmin, removeAdminEmail } from "@/lib/admin";
 import { getDb, user, session, account } from "@/db";
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
-    const auth = await createAuth();
-    const currentSession = await auth.api.getSession({ headers: await headers() });
-
-    if (!currentSession) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if requester is admin
-    const requesterIsAdmin = await isAdmin(currentSession.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { session: currentSession, error } = await requireAdmin();
+    if (error) return error;
 
     // Get userId from request body
     const body = (await request.json()) as { userId?: string };

@@ -1,23 +1,10 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { createAuth } from "@/lib/auth";
-import { isAdmin, addAdminEmail, removeAdminEmail } from "@/lib/admin";
+import { requireAdmin, isAdmin, addAdminEmail, removeAdminEmail } from "@/lib/admin";
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if requester is admin
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { session, error } = await requireAdmin();
+    if (error) return error;
 
     // Get email from request body
     const body = (await request.json()) as { email?: string };

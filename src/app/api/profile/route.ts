@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { createAuth } from "@/lib/auth";
+import { requireAuth } from "@/lib/admin";
 import { getDb, userProfile } from "@/db";
 
 /**
@@ -9,12 +8,8 @@ import { getDb, userProfile } from "@/db";
  */
 export async function GET() {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error) return error;
 
     const db = await getDb();
     const [profile] = await db
@@ -43,12 +38,8 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { session, error } = await requireAuth();
+    if (error) return error;
 
     const body = (await request.json()) as { bio?: string };
     const { bio } = body;

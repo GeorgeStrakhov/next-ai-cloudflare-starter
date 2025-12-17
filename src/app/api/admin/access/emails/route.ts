@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { createAuth } from "@/lib/auth";
-import { isAdmin } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin";
 import {
   getAllowedEmails,
   addAllowedEmail,
@@ -10,17 +8,8 @@ import {
 
 export async function GET() {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { error } = await requireAdmin();
+    if (error) return error;
 
     const emails = await getAllowedEmails();
     return NextResponse.json(emails);
@@ -35,17 +24,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { session, error } = await requireAdmin();
+    if (error) return error;
 
     const body = (await request.json()) as { email?: string; note?: string };
     const { email, note } = body;
@@ -80,17 +60,8 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const auth = await createAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const requesterIsAdmin = await isAdmin(session.user.email);
-    if (!requesterIsAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { error } = await requireAdmin();
+    if (error) return error;
 
     const body = (await request.json()) as { email?: string };
     const { email } = body;

@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { LLM_MODELS, type LLMModel } from "@/lib/services/llm";
+import { requireAuth } from "@/lib/admin";
 
 export const maxDuration = 30;
 
@@ -18,6 +19,10 @@ function getOpenRouter() {
 
 export async function POST(request: Request) {
   try {
+    // Require authentication (costs money via OpenRouter)
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const { messages }: { messages: UIMessage[] } = await request.json();
 
     // Get model from header
