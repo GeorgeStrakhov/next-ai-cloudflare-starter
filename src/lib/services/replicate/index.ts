@@ -1,5 +1,15 @@
 export {
   generateImage,
+  editImage,
+  upscaleImage,
+  removeBackground,
+  getMaxImagesForModel,
   type ImageGenerationOptions,
   type ImageGenerationResult,
+  type ImageEditingOptions,
+  type ImageEditingResult,
+  type ImageUpscalingOptions,
+  type ImageUpscalingResult,
+  type RemoveBackgroundOptions,
+  type RemoveBackgroundResult,
 } from "./replicate";

@@ -1,5 +1,19 @@
-##  FIXES:
 
+
+- delete ui - right on the image. maybe upscale and remove bg there as well?ok 
+- is delete working?
+
+## BIG THINGS:
+
+- update to AI sdk beta v6, including agents
+- add toolcalling loop to agents
+- add message history and previous chats for user
+- add knowledge bases and embeddings (?)
+
+##  FIXES:
+- why sign in event shows in analytics on every page load?
+- when clicking on a sidebar - close its
+- migrate away from tabler and to lucide react (?)
 - make posthog optional (turn off by default)
 - telegram notification service
 - add admin feature to broadcast messages to all users

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   IconMessageCircle,
-  IconUpload,
-  IconSparkles,
+  IconPhoto,
   IconLayoutDashboard,
   IconShield,
 } from "@tabler/icons-react";
@@ -41,14 +40,9 @@ const navItems = [
     icon: IconMessageCircle,
   },
   {
-    title: "Image Upload",
-    url: "/dashboard/upload",
-    icon: IconUpload,
-  },
-  {
-    title: "Image Generation",
-    url: "/dashboard/generate",
-    icon: IconSparkles,
+    title: "Images",
+    url: "/dashboard/images",
+    icon: IconPhoto,
   },
 ];
 

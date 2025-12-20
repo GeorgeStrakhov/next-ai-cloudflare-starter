@@ -3,6 +3,7 @@ export {
   uploadFiles,
   uploadBase64File,
   uploadFromUrl,
+  deleteFile,
   getPublicUrl,
   getKeyFromUrl,
   getTransformedImageUrl,

@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v4 as uuidv4 } from "uuid";
 import slugify from "slugify";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 export interface UploadOptions {
   folder?: string;
@@ -214,6 +214,55 @@ export async function uploadFromUrl(
     console.error("URL upload error:", error);
     throw new Error(
       `Failed to upload from URL: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+/**
+ * Delete a file from R2 bucket
+ * @param key The R2 object key to delete
+ * @returns true if deleted successfully
+ */
+export async function deleteFile(key: string): Promise<boolean> {
+  try {
+    // Get R2 bucket from Cloudflare context
+    const { env } = await getCloudflareContext();
+    const bucket = env.R2_BUCKET;
+
+    if (!bucket) {
+      throw new Error("R2_BUCKET binding not found in Cloudflare environment");
+    }
+
+    const isDevelopment = process.env.NODE_ENV === "development";
+
+    if (isDevelopment) {
+      const s3Client = new S3Client({
+        endpoint: process.env.S3_ENDPOINT_URL,
+        region: process.env.S3_REGION || "weur",
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_ID_KEY!,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        },
+      });
+
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: key,
+        })
+      );
+
+      return true;
+    }
+
+    // Delete from R2 using native bindings (production/staging)
+    await bucket.delete(key);
+
+    return true;
+  } catch (error) {
+    console.error("R2 delete error:", error);
+    throw new Error(
+      `Failed to delete file: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }

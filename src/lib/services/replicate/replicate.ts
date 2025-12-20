@@ -47,6 +47,17 @@ const IMAGE_GENERATION_MODELS: Record<string, ModelConfig> = {
       num_inference_steps: 4,
     }),
   },
+  "nano-banana-pro": {
+    replicateId: "google/nano-banana-pro",
+    buildInput: (prompt, aspectRatio) => ({
+      prompt,
+      resolution: "2K",
+      image_input: [],
+      aspect_ratio: aspectRatio,
+      output_format: "jpg" as const,
+      safety_filter_level: "block_only_high" as const,
+    }),
+  },
 };
 
 export interface ImageGenerationOptions {
@@ -167,9 +178,15 @@ export async function generateImage(
 
     // Determine file extension and content type based on model
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const isWebp = model === "flux-2-pro" || model === "flux-schnell";
-    const extension = isWebp ? "webp" : "png";
-    const contentType = isWebp ? "image/webp" : "image/png";
+    let extension = "png";
+    let contentType = "image/png";
+    if (model === "flux-2-pro" || model === "flux-schnell") {
+      extension = "webp";
+      contentType = "image/webp";
+    } else if (model === "nano-banana-pro") {
+      extension = "jpg";
+      contentType = "image/jpeg";
+    }
     const filename = `${model}-${timestamp}.${extension}`;
 
     const uploadResult = await uploadFromUrl(replicateUrl, filename, {
