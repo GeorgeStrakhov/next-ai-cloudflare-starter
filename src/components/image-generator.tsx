@@ -20,6 +20,7 @@ interface GeneratedImage {
   key: string;
   size: number;
   prompt: string;
+  aspectRatio: string;
 }
 
 const MODELS = [
@@ -85,8 +86,8 @@ export function ImageGenerator() {
         throw new Error(errorData.error || "Generation failed");
       }
 
-      const data = (await response.json()) as { image: GeneratedImage };
-      setGeneratedImage(data.image);
+      const data = (await response.json()) as { image: Omit<GeneratedImage, 'aspectRatio'> };
+      setGeneratedImage({ ...data.image, aspectRatio });
       setPrompt(""); // Clear prompt after successful generation
       toast.success("Image generated successfully!");
     } catch (err) {
@@ -180,12 +181,17 @@ export function ImageGenerator() {
         <div className="space-y-4 border-t pt-6">
           <h3 className="text-lg font-semibold">Generated Image</h3>
           <div className="space-y-3 border rounded-lg p-4">
-            <div className="relative w-full aspect-square max-w-xl mx-auto">
+            <div
+              className="relative w-full max-w-xl mx-auto"
+              style={{
+                aspectRatio: generatedImage.aspectRatio.replace(':', ' / ')
+              }}
+            >
               <Image
                 src={getTransformedImageUrl(generatedImage.url)}
                 alt={generatedImage.prompt}
                 fill
-                className="object-cover rounded-lg"
+                className="object-contain rounded-lg"
               />
             </div>
             <div className="space-y-1">
