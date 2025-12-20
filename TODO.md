@@ -1,8 +1,4 @@
 
-
-- delete ui - right on the image. maybe upscale and remove bg there as well?ok 
-- is delete working?
-
 ## BIG THINGS:
 
 - update to AI sdk beta v6, including agents
