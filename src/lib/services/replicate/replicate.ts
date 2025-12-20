@@ -22,15 +22,16 @@ const IMAGE_GENERATION_MODELS: Record<string, ModelConfig> = {
       safety_filter_level: "block_only_high" as const,
     }),
   },
-  "flux-pro-1-1": {
-    replicateId: "black-forest-labs/flux-1.1-pro",
+  "flux-2-pro": {
+    replicateId: "black-forest-labs/flux-2-pro",
     buildInput: (prompt, aspectRatio) => ({
       prompt,
+      resolution: "1 MP",
       aspect_ratio: aspectRatio,
+      input_images: [],
       output_format: "webp" as const,
       output_quality: 80,
       safety_tolerance: 2,
-      prompt_upsampling: true,
     }),
   },
   "flux-schnell": {
@@ -51,7 +52,7 @@ const IMAGE_GENERATION_MODELS: Record<string, ModelConfig> = {
 export interface ImageGenerationOptions {
   prompt: string;
   model?: string; // Model name from registry
-  aspectRatio?: "1:1" | "16:9" | "9:16";
+  aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   folder?: string;
 }
 
@@ -75,14 +76,16 @@ interface EditingModelConfig {
 }
 
 const IMAGE_EDITING_MODELS: Record<string, EditingModelConfig> = {
-  "nano-banana": {
-    replicateId: "google/nano-banana",
+  "nano-banana-pro": {
+    replicateId: "google/nano-banana-pro",
     maxImages: 8,
     buildInput: (prompt, imageInputs, outputFormat, aspectRatio) => ({
       prompt,
+      resolution: "2K",
       image_input: imageInputs,
       aspect_ratio: aspectRatio || "match_input_image",
       output_format: outputFormat,
+      safety_filter_level: "block_only_high",
     }),
   },
   "flux-kontext": {
@@ -152,7 +155,7 @@ export async function generateImage(
         throw new Error("Invalid array output format from Replicate API");
       }
     } else if (output && typeof output === "object" && "url" in output) {
-      // imagen-4-ultra and flux-pro-1-1 return an object
+      // imagen-4-ultra and flux-2-pro return an object
       replicateUrl = (output as { url(): string }).url();
     } else {
       throw new Error("Invalid response from Replicate API");
@@ -164,7 +167,7 @@ export async function generateImage(
 
     // Determine file extension and content type based on model
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const isWebp = model === "flux-pro-1-1" || model === "flux-schnell";
+    const isWebp = model === "flux-2-pro" || model === "flux-schnell";
     const extension = isWebp ? "webp" : "png";
     const contentType = isWebp ? "image/webp" : "image/png";
     const filename = `${model}-${timestamp}.${extension}`;
@@ -193,7 +196,7 @@ export async function editImage(
   const {
     prompt,
     imageInputs,
-    model = "nano-banana",
+    model = "nano-banana-pro",
     outputFormat = "jpg",
     aspectRatio,
     folder = "edited-images",

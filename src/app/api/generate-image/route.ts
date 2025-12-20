@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const result = await generateImage({
       prompt: prompt.trim(),
       model: model || "imagen-4-ultra",
-      aspectRatio: (aspectRatio as "1:1" | "16:9" | "9:16" | undefined) || "1:1",
+      aspectRatio: (aspectRatio as "1:1" | "16:9" | "9:16" | "4:3" | "3:4" | undefined) || "1:1",
       folder: `generated-images/${session.user.id}`,
     });
 

@@ -24,7 +24,7 @@ interface GeneratedImage {
 
 const MODELS = [
   { value: "imagen-4-ultra", label: "Google Imagen 4 Ultra" },
-  { value: "flux-pro-1-1", label: "FLUX 1.1 Pro" },
+  { value: "flux-2-pro", label: "FLUX 2 Pro" },
   { value: "flux-schnell", label: "FLUX Schnell" },
 ] as const;
 
