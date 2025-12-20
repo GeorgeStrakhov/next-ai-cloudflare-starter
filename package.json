@@ -54,6 +54,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"drizzle-orm": "^0.45.0",
+		"framer-motion": "^12.23.26",
 		"import-in-the-middle": "^2.0.0",
 		"lucide-react": "^0.556.0",
 		"marked": "^16.4.1",
