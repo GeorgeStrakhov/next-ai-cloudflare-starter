@@ -1,4 +1,4 @@
-export { generateText, generateObject, streamText } from "./llm";
+export { generateText, generateObject, streamText, getOpenRouter } from "./llm";
 export { LLM_MODELS } from "./types";
 export type {
   LLMModel,

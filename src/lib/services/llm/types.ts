@@ -6,7 +6,9 @@ import { z } from "zod";
 export const LLM_MODELS = {
   GPT_4_1_MINI: "openai/gpt-4.1-mini",
   GEMINI_FLASH: "google/gemini-2.5-flash",
+  GEMINI_3_FLASH: "google/gemini-3-flash-preview",
   CLAUDE_HAIKU: "anthropic/claude-haiku-4.5",
+  MISTRAL_SMALL: "mistralai/mistral-small-creative",
 } as const;
 
 export type LLMModel = (typeof LLM_MODELS)[keyof typeof LLM_MODELS];

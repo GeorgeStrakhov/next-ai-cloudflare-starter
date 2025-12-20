@@ -1,20 +1,20 @@
 /**
  * LLM Service
  *
- * Provides text generation and structured data extraction using AI SDK 5 with OpenRouter.
+ * Provides text generation and structured data extraction using AI SDK 6 with OpenRouter.
  *
  * Features:
  * - Text generation with customizable parameters
  * - Structured data extraction using Zod schemas
  * - Streaming text generation for real-time responses
- * - Multiple model support (GPT-4o Mini, Gemini Flash, Claude Haiku)
+ * - Multiple model support (GPT-4.1 Mini, Gemini Flash, Claude Haiku)
  *
  * Usage:
  * ```typescript
  * // Simple text generation
  * const response = await generateText({
  *   prompt: "Write a haiku about coding",
- *   model: LLM_MODELS.GPT_4O_MINI
+ *   model: LLM_MODELS.GPT_4_1_MINI
  * });
  *
  * // Structured data extraction
@@ -33,7 +33,7 @@
  */
 
 import { generateObject as aiGenerateObject, generateText as aiGenerateText, streamText as aiStreamText } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 import {
   GenerateTextOptions,
@@ -45,17 +45,21 @@ import {
 } from "./types";
 
 /**
- * Get OpenRouter client instance
+ * Get OpenRouter client instance using OpenAI-compatible provider
  */
-function getOpenRouter() {
+export function getOpenRouter() {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
   }
 
-  return createOpenRouter({
-    apiKey,
+  return createOpenAICompatible({
+    name: "openrouter",
+    baseURL: "https://openrouter.ai/api/v1",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
   });
 }
 

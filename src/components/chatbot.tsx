@@ -1,9 +1,11 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,7 +19,9 @@ import { LLM_MODELS } from "@/lib/services/llm";
 const MODEL_OPTIONS = [
   { value: LLM_MODELS.GPT_4_1_MINI, label: "GPT-4.1 Mini" },
   { value: LLM_MODELS.GEMINI_FLASH, label: "Gemini 2.5 Flash" },
+  { value: LLM_MODELS.GEMINI_3_FLASH, label: "Gemini 3 Flash" },
   { value: LLM_MODELS.CLAUDE_HAIKU, label: "Claude Haiku 4.5" },
+  { value: LLM_MODELS.MISTRAL_SMALL, label: "Mistral Small Creative" },
 ] as const;
 
 export function Chatbot() {
@@ -25,16 +29,38 @@ export function Chatbot() {
     LLM_MODELS.GPT_4_1_MINI
   );
   const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat({
-    // @ts-expect-error - headers option exists but not in types yet
-    headers: {
-      "X-Model": selectedModel,
-    },
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Create transport with model in body
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: {
+          model: selectedModel,
+        },
+      }),
+    [selectedModel]
+  );
+
+  // Use key to force reinitialize when model changes
+  const { messages, sendMessage, status } = useChat({
+    transport,
+    id: selectedModel, // Forces new chat instance per model
   });
+
+  const isLoading = status === "streaming" || status === "submitted";
+
+  // Focus input when response completes
+  useEffect(() => {
+    if (status === "ready") {
+      inputRef.current?.focus();
+    }
+  }, [status]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     sendMessage({ text: input });
     setInput("");
@@ -101,13 +127,19 @@ export function Chatbot() {
       <form onSubmit={handleSubmit} className="p-4 border-t">
         <div className="flex gap-2">
           <Input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             className="flex-1"
+            disabled={isLoading}
           />
-          <Button type="submit" disabled={!input.trim()}>
-            Send
+          <Button type="submit" disabled={!input.trim() || isLoading}>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Send"
+            )}
           </Button>
         </div>
       </form>

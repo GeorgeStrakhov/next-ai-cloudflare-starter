@@ -1,21 +1,8 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { LLM_MODELS, type LLMModel } from "@/lib/services/llm";
+import { LLM_MODELS, getOpenRouter, type LLMModel } from "@/lib/services/llm";
 import { requireAuth } from "@/lib/admin";
 
 export const maxDuration = 30;
-
-function getOpenRouter() {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY environment variable is not set");
-  }
-
-  return createOpenRouter({
-    apiKey,
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -23,25 +10,27 @@ export async function POST(request: Request) {
     const { error } = await requireAuth();
     if (error) return error;
 
-    const { messages }: { messages: UIMessage[] } = await request.json();
-
-    // Get model from header
-    const modelFromHeader = request.headers.get("X-Model") as LLMModel | null;
+    const { messages, model: modelFromBody }: { messages: UIMessage[]; model?: string } = await request.json();
 
     // Validate model is one of our supported models
     const validModels = Object.values(LLM_MODELS);
-    const selectedModel = modelFromHeader || LLM_MODELS.GPT_4_1_MINI;
+    const selectedModel = (modelFromBody as LLMModel) || LLM_MODELS.GPT_4_1_MINI;
 
     if (!validModels.includes(selectedModel)) {
       return new Response("Invalid model", { status: 400 });
     }
 
+    console.log("Using model:", selectedModel);
+
     const openrouter = getOpenRouter();
+
+    // Convert UI messages to model messages (async in v6)
+    const modelMessages = await convertToModelMessages(messages);
 
     // Stream the response
     const result = streamText({
       model: openrouter(selectedModel),
-      messages: convertToModelMessages(messages),
+      messages: modelMessages,
       system: "You are a helpful AI assistant. Be concise and friendly.",
       temperature: 0.7,
     });

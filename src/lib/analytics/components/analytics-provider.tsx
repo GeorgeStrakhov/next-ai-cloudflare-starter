@@ -89,14 +89,23 @@ export function AnalyticsProvider() {
         name: user.name,
       });
 
-      // Track sign in event
-      analytics.track(AnalyticsEvents.SIGN_IN, {
-        method: "magic_link", // Better Auth default
-      });
+      // Only track sign_in if this is a fresh sign-in (not a page refresh with existing session)
+      // We use sessionStorage to track if we've already identified this user in this browser session
+      const identifiedKey = `analytics_identified_${userId}`;
+      if (!sessionStorage.getItem(identifiedKey)) {
+        sessionStorage.setItem(identifiedKey, "true");
+        analytics.track(AnalyticsEvents.SIGN_IN, {
+          method: "magic_link",
+        });
+      }
     }
 
     // User signed out
     if (!userId && lastUserIdRef.current) {
+      // Clear the session storage flag for the previous user
+      const identifiedKey = `analytics_identified_${lastUserIdRef.current}`;
+      sessionStorage.removeItem(identifiedKey);
+
       analytics.track(AnalyticsEvents.SIGN_OUT, {});
       analytics.reset();
       lastUserIdRef.current = null;

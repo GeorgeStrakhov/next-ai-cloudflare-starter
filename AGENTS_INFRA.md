@@ -5,9 +5,9 @@ This document outlines the plan for upgrading from a simple chatbot to a full mu
 ## Overview
 
 ### Current State
-- AI SDK 5 with `useChat` hook
+- AI SDK 6 beta with `useChat` hook and `DefaultChatTransport`
 - Simple streaming chatbot
-- 3 model options (GPT-4.1 Mini, Gemini Flash, Claude Haiku)
+- 5 model options (GPT-4.1 Mini, Gemini 2.5 Flash, Gemini 3 Flash, Claude Haiku 4.5, Mistral Small Creative)
 - No chat persistence
 - Fixed system prompt
 - No tool calling
@@ -577,12 +577,12 @@ function ChatMessage({ message }: { message: UIMessage }) {
 
 ## 8. Implementation Phases
 
-### Phase 1: AI SDK v6 Migration (Foundation)
-- [ ] Upgrade packages to v6 beta
-- [ ] Update `useChat` to new transport API
-- [ ] Update message rendering for `parts` structure
-- [ ] Update API route to use new streaming API
-- [ ] Test basic chat functionality works
+### Phase 1: AI SDK v6 Migration (Foundation) ✅ COMPLETE
+- [x] Upgrade packages to v6 beta (`ai@6.0.0-beta.164`, `@ai-sdk/react@3.0.0-beta.167`)
+- [x] Update `useChat` to new transport API (`DefaultChatTransport` with body params)
+- [x] Update message rendering for `parts` structure
+- [x] Update API route to use new streaming API (async `convertToModelMessages`)
+- [x] Test basic chat functionality works
 
 ### Phase 2: Database Schema & Chat Persistence
 - [ ] Create `agent`, `chat`, `chat_message` tables

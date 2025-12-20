@@ -11,7 +11,7 @@ export function DashboardHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mx-2 h-4" />
       <Link href="/dashboard">
-        <h1 className="text-sm font-medium cursor-pointer hover:text-primary/80">
+        <h1 className="text-sm font-medium cursor-pointer hover:text-muted-foreground transition-colors">
           Dashboard
         </h1>
       </Link>

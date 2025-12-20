@@ -1,4 +1,3 @@
-
 ## BIG THINGS:
 
 - update to AI sdk beta v6, including agents
@@ -7,7 +6,6 @@
 - add knowledge bases and embeddings (?)
 
 ##  FIXES:
-- why sign in event shows in analytics on every page load?
 - when clicking on a sidebar - close its
 - migrate away from tabler and to lucide react (?)
 - make posthog optional (turn off by default)
