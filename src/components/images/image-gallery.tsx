@@ -9,8 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, Pencil, Loader2 } from "lucide-react";
+import { Upload, Pencil, Loader2, Heart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PromptBar } from "./prompt-bar";
 import { ImageCard, ImageCardSkeleton } from "./image-card";
 import { ImageDetailSheet } from "./image-detail-sheet";
@@ -33,12 +43,15 @@ export function ImageGallery() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
   // Dialog states
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Selection and detail view
   const [selectedImage, setSelectedImage] = useState<ImageOperation | null>(null);
@@ -61,6 +74,9 @@ export function ImageGallery() {
         if (filter !== "all") {
           params.set("filter", filter);
         }
+        if (favoritesOnly) {
+          params.set("favorites", "true");
+        }
 
         const response = await fetch(`/api/images?${params}`);
         if (!response.ok) throw new Error("Failed to fetch images");
@@ -81,7 +97,7 @@ export function ImageGallery() {
         setIsLoadingMore(false);
       }
     },
-    [filter]
+    [filter, favoritesOnly]
   );
 
   // Load more handler
@@ -313,6 +329,63 @@ export function ImageGallery() {
     toast.success("Image deleted");
   };
 
+  const handleToggleFavorite = async (image: ImageOperation) => {
+    try {
+      const response = await fetch(`/api/images/${image.id}`, {
+        method: "PATCH",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to toggle favorite");
+      }
+
+      const result = await response.json();
+
+      // Update the image in state
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === image.id ? { ...img, favorite: result.favorite } : img
+        )
+      );
+    } catch (error) {
+      toast.error("Failed to update favorite");
+      console.error(error);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedForEdit.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const response = await fetch("/api/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedForEdit.map((img) => img.id) }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete images");
+      }
+
+      const result = await response.json();
+
+      // Remove deleted images from state
+      const deletedIds = new Set(selectedForEdit.map((img) => img.id));
+      setImages((prev) => prev.filter((img) => !deletedIds.has(img.id)));
+
+      toast.success(`Deleted ${result.deleted} image${result.deleted > 1 ? "s" : ""}`);
+      setSelectedForEdit([]);
+      setIsSelectMode(false);
+      setBulkDeleteOpen(false);
+    } catch (error) {
+      toast.error("Failed to delete images");
+      console.error(error);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const handleImageClick = (image: ImageOperation) => {
     if (isSelectMode) {
       const isSelected = selectedForEdit.some((img) => img.id === image.id);
@@ -349,35 +422,49 @@ export function ImageGallery() {
 
       {/* Actions bar */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Filter:</span>
-          <Select
-            value={filter}
-            onValueChange={(v) => setFilter(v as FilterType)}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Filter:</span>
+            <Select
+              value={filter}
+              onValueChange={(v) => setFilter(v as FilterType)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Images</SelectItem>
+                <SelectItem value="generate">Generated</SelectItem>
+                <SelectItem value="edit">Edited</SelectItem>
+                <SelectItem value="remove_bg">BG Removed</SelectItem>
+                <SelectItem value="upscale">Upscaled</SelectItem>
+                <SelectItem value="upload">Uploaded</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            variant={favoritesOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFavoritesOnly(!favoritesOnly)}
           >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Images</SelectItem>
-              <SelectItem value="generate">Generated</SelectItem>
-              <SelectItem value="edit">Edited</SelectItem>
-              <SelectItem value="remove_bg">BG Removed</SelectItem>
-              <SelectItem value="upscale">Upscaled</SelectItem>
-              <SelectItem value="upload">Uploaded</SelectItem>
-            </SelectContent>
-          </Select>
+            <Heart
+              className={`h-4 w-4 mr-1 ${favoritesOnly ? "fill-current" : ""}`}
+            />
+            Favorites
+          </Button>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setUploadOpen(true)}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload
-          </Button>
+        <div className="flex gap-2 flex-wrap justify-end">
+          {!isSelectMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUploadOpen(true)}
+            >
+              <Upload className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Upload</span>
+            </Button>
+          )}
 
           {isSelectMode ? (
             <>
@@ -396,8 +483,19 @@ export function ImageGallery() {
                 onClick={handleOpenEditFromSelection}
                 disabled={selectedForEdit.length === 0}
               >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit ({selectedForEdit.length})
+                <Pencil className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Edit</span>
+                <span className="ml-1">({selectedForEdit.length})</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setBulkDeleteOpen(true)}
+                disabled={selectedForEdit.length === 0}
+              >
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Delete</span>
+                <span className="ml-1">({selectedForEdit.length})</span>
               </Button>
             </>
           ) : (
@@ -407,8 +505,8 @@ export function ImageGallery() {
               onClick={() => setIsSelectMode(true)}
               disabled={images.length === 0}
             >
-              <Pencil className="h-4 w-4 mr-2" />
-              Select to Edit
+              <Pencil className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Select</span>
             </Button>
           )}
         </div>
@@ -424,13 +522,11 @@ export function ImageGallery() {
         </div>
       )}
 
-      {/* Gallery - masonry layout */}
+      {/* Gallery - CSS Grid with row spans for masonry effect */}
       {isLoading ? (
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-[150px]">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="break-inside-avoid mb-4">
-              <ImageCardSkeleton />
-            </div>
+            <ImageCardSkeleton key={i} />
           ))}
         </div>
       ) : images.length === 0 ? (
@@ -439,16 +535,17 @@ export function ImageGallery() {
           <p className="text-sm mt-1">Enter a prompt above to generate your first image!</p>
         </div>
       ) : (
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-[150px]">
           {images.map((image) => (
-            <div key={image.id} className="break-inside-avoid mb-4">
-              <ImageCard
-                image={image}
-                selected={selectedForEdit.some((img) => img.id === image.id)}
-                selectable={isSelectMode && image.status === "completed"}
-                onClick={() => handleImageClick(image)}
-              />
-            </div>
+            <ImageCard
+              key={image.id}
+              image={image}
+              selected={selectedForEdit.some((img) => img.id === image.id)}
+              selectable={isSelectMode && image.status === "completed"}
+              onClick={() => handleImageClick(image)}
+              onToggleFavorite={handleToggleFavorite}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
@@ -499,6 +596,36 @@ export function ImageGallery() {
         onUpscale={handleUpscale}
         onDelete={handleDelete}
       />
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedForEdit.length} Images</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedForEdit.length} image
+              {selectedForEdit.length > 1 ? "s" : ""}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

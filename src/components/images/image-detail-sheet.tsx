@@ -125,7 +125,7 @@ export function ImageDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto p-6">
+        <SheetContent className="w-full sm:max-w-lg p-6 flex flex-col">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <span>{OPERATION_LABELS[image.operationType as OperationType]}</span>
@@ -140,96 +140,78 @@ export function ImageDetailSheet({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6 space-y-6">
-            {/* Image preview */}
-            <div
-              className={cn(
-                "relative w-full rounded-lg overflow-hidden bg-muted",
-                image.aspectRatio === "16:9" && "aspect-video",
-                image.aspectRatio === "9:16" && "aspect-[9/16]",
-                image.aspectRatio === "4:3" && "aspect-[4/3]",
-                image.aspectRatio === "3:4" && "aspect-[3/4]",
-                // Default to square for 1:1, match_input_image, or any other value
-                (!image.aspectRatio ||
-                  image.aspectRatio === "1:1" ||
-                  !["16:9", "9:16", "4:3", "3:4"].includes(image.aspectRatio)) &&
-                  "aspect-square"
-              )}
-            >
+          <div className="mt-4 flex flex-col gap-4 flex-1 min-h-0">
+            {/* Image preview - grows to fill available space, but always visible */}
+            <div className="relative flex-1 min-h-32 w-full rounded-lg overflow-hidden bg-muted flex items-center justify-center">
               <Image
                 src={getTransformedImageUrl(image.outputUrl)}
                 alt={image.prompt || "Image"}
-                fill
+                width={800}
+                height={800}
                 priority
-                className="object-contain"
+                className="object-contain max-w-full max-h-full"
                 sizes="(max-width: 640px) 100vw, 500px"
               />
             </div>
 
-            {/* Metadata */}
-            <div className="space-y-3 text-sm">
-              {image.prompt && (
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Prompt</p>
-                  <p>{image.prompt}</p>
+            {/* Content area - scrollable if long prompt */}
+            <div className="flex-shrink-0 space-y-4 max-h-[25vh] overflow-y-auto">
+              {/* URL copy */}
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">CDN URL</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={image.outputUrl}
+                    readOnly
+                    className="flex-1 text-xs bg-muted border rounded px-2 py-1.5 truncate"
+                  />
+                  <Button size="sm" variant="outline" onClick={handleCopyUrl}>
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(image.outputUrl, "_blank")}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
                 </div>
-              )}
-
-              {image.model && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Model</span>
-                  <span className="font-medium">{image.model}</span>
-                </div>
-              )}
-
-              {image.aspectRatio && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Aspect Ratio</span>
-                  <span className="font-medium">{image.aspectRatio}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Size</span>
-                <span className="font-medium">
-                  {formatFileSize(image.outputSize)}
-                </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span className="font-medium">
-                  {formatDate(image.createdAt)}
-                </span>
-              </div>
-            </div>
+              {/* Metadata */}
+              <div className="space-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {image.model && (
+                    <>
+                      <span className="text-muted-foreground">Model</span>
+                      <span className="font-medium text-right">{image.model}</span>
+                    </>
+                  )}
+                  {image.aspectRatio && (
+                    <>
+                      <span className="text-muted-foreground">Aspect Ratio</span>
+                      <span className="font-medium text-right">{image.aspectRatio}</span>
+                    </>
+                  )}
+                  <span className="text-muted-foreground">Size</span>
+                  <span className="font-medium text-right">{formatFileSize(image.outputSize)}</span>
+                  <span className="text-muted-foreground">Created</span>
+                  <span className="font-medium text-right">{formatDate(image.createdAt)}</span>
+                </div>
 
-            {/* URL copy */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">CDN URL</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={image.outputUrl}
-                  readOnly
-                  className="flex-1 text-xs bg-muted border rounded px-2 py-1.5 truncate"
-                />
-                <Button size="sm" variant="outline" onClick={handleCopyUrl}>
-                  <Copy className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(image.outputUrl, "_blank")}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
+                {image.prompt && (
+                  <div>
+                    <p className="font-medium text-muted-foreground mb-1">Prompt</p>
+                    <p className="text-sm">{image.prompt}</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions - always visible at bottom */}
             {image.status === "completed" && (
-              <div className="space-y-2">
+              <div className="flex-shrink-0 space-y-2 pt-2 border-t">
                 <p className="text-sm font-medium text-muted-foreground">
                   Actions
                 </p>

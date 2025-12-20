@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
       outputUrl: "", // Will be updated when complete
       outputKey: "", // Will be updated when complete
       status: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     // Fetch the pending record to return immediately

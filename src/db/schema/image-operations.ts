@@ -41,6 +41,9 @@ export const imageOperation = sqliteTable(
     status: text("status").default("pending").notNull(),
     errorMessage: text("error_message"),
 
+    // Favorite
+    favorite: integer("favorite", { mode: "boolean" }).default(false).notNull(),
+
     // Timestamps
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsec') * 1000 as integer))`)

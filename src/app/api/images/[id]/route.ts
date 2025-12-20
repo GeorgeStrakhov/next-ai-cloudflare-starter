@@ -48,6 +48,60 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
+ * PATCH /api/images/[id] - Toggle favorite status
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { session, error } = await requireAuth();
+    if (error) return error;
+
+    const { id } = await params;
+
+    const db = await getDb();
+
+    // Verify ownership
+    const [image] = await db
+      .select()
+      .from(imageOperation)
+      .where(
+        and(
+          eq(imageOperation.id, id),
+          eq(imageOperation.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!image) {
+      return NextResponse.json(
+        { error: "Image not found" },
+        { status: 404 }
+      );
+    }
+
+    // Toggle favorite
+    const newFavorite = !image.favorite;
+    await db
+      .update(imageOperation)
+      .set({
+        favorite: newFavorite,
+        updatedAt: new Date(),
+      })
+      .where(eq(imageOperation.id, id));
+
+    return NextResponse.json({
+      success: true,
+      favorite: newFavorite,
+    });
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/images/[id] - Delete a single image
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {

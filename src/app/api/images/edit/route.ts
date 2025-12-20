@@ -98,6 +98,8 @@ export async function POST(request: NextRequest) {
       outputUrl: "",
       outputKey: "",
       status: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     // Fetch the pending record to return immediately

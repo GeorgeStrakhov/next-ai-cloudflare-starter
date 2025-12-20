@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "@/lib/admin";
 import { getDb, imageOperation } from "@/db";
 import { uploadFile } from "@/lib/services/s3";
+import { getImageDimensions, getClosestAspectRatio } from "@/lib/image-utils";
 import type { OperationType } from "@/db/schema/image-operations";
 
 /**
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get("filter") as OperationType | "all" | null;
 
     const offset = (page - 1) * limit;
+    const favoritesOnly = searchParams.get("favorites") === "true";
 
     const db = await getDb();
 
@@ -28,6 +30,10 @@ export async function GET(request: NextRequest) {
 
     if (filter && filter !== "all") {
       conditions.push(eq(imageOperation.operationType, filter));
+    }
+
+    if (favoritesOnly) {
+      conditions.push(eq(imageOperation.favorite, true));
     }
 
     // Get images with pagination
@@ -93,16 +99,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get buffer for upload and dimension detection
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Detect image dimensions and map to closest aspect ratio
+    const dimensions = getImageDimensions(buffer);
+    const aspectRatio = dimensions
+      ? getClosestAspectRatio(dimensions.width, dimensions.height)
+      : "1:1"; // Default to square if detection fails
+
     // Upload to R2
     const folder = `uploads/${session.user.id}`;
-    const uploadResult = await uploadFile(
-      await file.arrayBuffer().then((ab) => Buffer.from(ab)),
-      file.name,
-      {
-        folder,
-        contentType: file.type,
-      }
-    );
+    const uploadResult = await uploadFile(buffer, file.name, {
+      folder,
+      contentType: file.type,
+    });
 
     // Create database record
     const db = await getDb();
@@ -112,10 +123,13 @@ export async function POST(request: NextRequest) {
       id,
       userId: session.user.id,
       operationType: "upload",
+      aspectRatio,
       outputUrl: uploadResult.publicUrl,
       outputKey: uploadResult.key,
       outputSize: uploadResult.size,
       status: "completed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     // Fetch the created record
