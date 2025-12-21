@@ -70,6 +70,7 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
     agent?.systemPrompt || "You are a helpful AI assistant. Be concise and friendly."
   );
   const [model, setModel] = useState(agent?.model || "google/gemini-2.5-flash");
+  const [maxToolSteps, setMaxToolSteps] = useState(agent?.maxToolSteps ?? 5);
   const [isDefault, setIsDefault] = useState(agent?.isDefault || false);
   const [visibility, setVisibility] = useState<"public" | "admin_only">(
     agent?.visibility || "admin_only"
@@ -115,6 +116,7 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
           description: description.trim() || null,
           systemPrompt: systemPrompt.trim(),
           model,
+          maxToolSteps,
           isDefault,
           visibility,
           enabledTools,
@@ -259,6 +261,22 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
             />
             <p className="text-xs text-muted-foreground">
               Instructions that define the agent&apos;s personality and behavior
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="max-tool-steps">Max Tool Steps</Label>
+            <Input
+              id="max-tool-steps"
+              type="number"
+              min={1}
+              max={50}
+              value={maxToolSteps}
+              onChange={(e) => setMaxToolSteps(Math.max(1, Math.min(50, parseInt(e.target.value) || 5)))}
+              className="w-32"
+            />
+            <p className="text-xs text-muted-foreground">
+              Maximum tool execution rounds per message (1-50). Higher values allow more complex multi-step tasks.
             </p>
           </div>
         </CardContent>

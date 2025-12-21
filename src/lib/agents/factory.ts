@@ -133,7 +133,7 @@ export function createAgentFromConfig(agent: Agent): AgentConfig {
     model: openrouter(agent.model),
     system: agent.systemPrompt,
     tools: hasTools ? tools : undefined,
-    stopWhen: [stepCountIs(10)], // Max 10 tool execution steps
+    stopWhen: [stepCountIs(agent.maxToolSteps)],
     metadata: {
       agentId: agent.id,
       agentName: agent.name,

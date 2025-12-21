@@ -21,6 +21,7 @@ export const agent = sqliteTable("agent", {
   // Tool Configuration (stored as JSON)
   enabledTools: text("enabled_tools"), // JSON array of tool slugs: ["web_search", "weather"]
   toolApprovals: text("tool_approvals"), // JSON object: { "web_search": false, "weather": true }
+  maxToolSteps: integer("max_tool_steps").default(5).notNull(), // Max tool execution rounds per message
 
   // Settings
   isDefault: integer("is_default", { mode: "boolean" }).default(false).notNull(),

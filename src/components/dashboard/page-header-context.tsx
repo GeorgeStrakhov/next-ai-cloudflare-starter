@@ -5,19 +5,26 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 interface PageHeaderContextValue {
   breadcrumb: ReactNode;
   setBreadcrumb: (content: ReactNode) => void;
+  actions: ReactNode;
+  setActions: (content: ReactNode) => void;
 }
 
 const PageHeaderContext = createContext<PageHeaderContextValue | null>(null);
 
 export function PageHeaderProvider({ children }: { children: ReactNode }) {
   const [breadcrumb, setBreadcrumbState] = useState<ReactNode>(null);
+  const [actions, setActionsState] = useState<ReactNode>(null);
 
   const setBreadcrumb = useCallback((content: ReactNode) => {
     setBreadcrumbState(content);
   }, []);
 
+  const setActions = useCallback((content: ReactNode) => {
+    setActionsState(content);
+  }, []);
+
   return (
-    <PageHeaderContext.Provider value={{ breadcrumb, setBreadcrumb }}>
+    <PageHeaderContext.Provider value={{ breadcrumb, setBreadcrumb, actions, setActions }}>
       {children}
     </PageHeaderContext.Provider>
   );
@@ -34,4 +41,9 @@ export function usePageHeader() {
 export function useBreadcrumb() {
   const context = useContext(PageHeaderContext);
   return context?.breadcrumb ?? null;
+}
+
+export function useActions() {
+  const context = useContext(PageHeaderContext);
+  return context?.actions ?? null;
 }

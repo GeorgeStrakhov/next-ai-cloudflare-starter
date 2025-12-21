@@ -4,10 +4,11 @@ import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "@/components/mode-toggle";
-import { useBreadcrumb } from "@/components/dashboard/page-header-context";
+import { useBreadcrumb, useActions } from "@/components/dashboard/page-header-context";
 
 export function DashboardHeader() {
   const breadcrumb = useBreadcrumb();
+  const actions = useActions();
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -26,7 +27,8 @@ export function DashboardHeader() {
           </>
         )}
       </div>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        {actions}
         <ModeToggle />
       </div>
     </header>

@@ -77,13 +77,23 @@ export function AgentSelector({ value, onChange, disabled }: AgentSelectorProps)
     );
   }
 
-  // If only one agent, don't show selector at all
-  if (agents.length <= 1) {
-    return null;
+  // Find the currently selected agent
+  const selectedAgent = agents.find((a) => a.id === value) || agents.find((a) => a.isDefault) || agents[0];
+
+  // If only one agent, show name without dropdown
+  if (agents.length === 1) {
+    return (
+      <div className="flex items-center gap-2 h-9 px-3 text-sm font-medium">
+        {selectedAgent.name}
+      </div>
+    );
   }
 
+  // Use selectedAgent.id if value is empty (ensures we always show something)
+  const effectiveValue = value || selectedAgent.id;
+
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
+    <Select value={effectiveValue} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className="h-9 px-3 gap-2 bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-accent transition-colors max-w-[200px]">
         <IconRobot className="h-4 w-4 text-muted-foreground shrink-0" />
         <span className="truncate">

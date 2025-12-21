@@ -68,6 +68,7 @@ export default async function ChatPage({ params }: PageProps) {
   return (
     <PersistentChatbot
       chatId={chatData.id}
+      chatTitle={chatData.title ?? undefined}
       initialMessages={parsedMessages}
       agentId={chatData.agent?.id || ""}
       agentName={chatData.agent?.name || "AI Assistant"}

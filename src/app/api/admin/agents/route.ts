@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       description,
       systemPrompt,
       model,
+      maxToolSteps,
       enabledTools,
       toolApprovals,
       isDefault,
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
       description?: string;
       systemPrompt?: string;
       model?: string;
+      maxToolSteps?: number;
       enabledTools?: string[];
       toolApprovals?: Record<string, boolean>;
       isDefault?: boolean;
@@ -130,6 +132,7 @@ export async function POST(request: NextRequest) {
       description: description?.trim() || null,
       systemPrompt: systemPrompt.trim(),
       model,
+      maxToolSteps: Math.max(1, Math.min(50, maxToolSteps ?? 5)),
       enabledTools: enabledTools ? JSON.stringify(enabledTools) : null,
       toolApprovals: toolApprovals ? JSON.stringify(toolApprovals) : null,
       isDefault: isDefault || false,

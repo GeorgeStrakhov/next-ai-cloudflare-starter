@@ -56,6 +56,7 @@ export function ChatList({ onLinkClick }: ChatListProps) {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, hasMore: false });
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const hasLoadedOnce = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<ChatItem | null>(null);
@@ -91,7 +92,8 @@ export function ChatList({ onLinkClick }: ChatListProps) {
 
   const fetchChats = useCallback(async (page = 1, append = false) => {
     try {
-      if (!append) setLoading(true);
+      // Only show loading skeleton on initial load, not on subsequent refreshes
+      if (!append && !hasLoadedOnce.current) setLoading(true);
       const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
       const res = await fetch(`/api/chats?limit=${CHATS_PER_PAGE}&page=${page}${searchParam}`);
       if (!res.ok) throw new Error("Failed to fetch chats");
@@ -103,6 +105,7 @@ export function ChatList({ onLinkClick }: ChatListProps) {
         setChats(data.chats);
       }
       setPagination({ total: data.pagination.total, hasMore: data.pagination.hasMore });
+      hasLoadedOnce.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load chats");
     } finally {

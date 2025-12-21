@@ -59,6 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       description,
       systemPrompt,
       model,
+      maxToolSteps,
       enabledTools,
       toolApprovals,
       isDefault,
@@ -68,6 +69,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       description?: string | null;
       systemPrompt?: string;
       model?: string;
+      maxToolSteps?: number;
       enabledTools?: string[] | null;
       toolApprovals?: Record<string, boolean> | null;
       isDefault?: boolean;
@@ -97,6 +99,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       description: string | null;
       systemPrompt: string;
       model: string;
+      maxToolSteps: number;
       enabledTools: string | null;
       toolApprovals: string | null;
       isDefault: boolean;
@@ -153,6 +156,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (model !== undefined) {
       updates.model = model;
+    }
+
+    if (maxToolSteps !== undefined) {
+      updates.maxToolSteps = Math.max(1, Math.min(50, maxToolSteps));
     }
 
     if (enabledTools !== undefined) {
