@@ -1,5 +1,20 @@
 ## BIG THINGS:
 
+- http://localhost:3000/dashboard/chat - default agent not selected
+
+- when switching between chats - flickering of the ui
+
+- btw. we shouldn't hardcode 5 max tool calls. it should be a setting on the agent for the admin to set with
+  5 as a default 
+
+
+- add perplexity tool via https://www.npmjs.com/package/@perplexity-ai/ai-sdk
+- add exa tool via https://www.npmjs.com/package/@exalabs/ai-sdk
+
+- chat: edit message (history resets from that point? or trees)
+
+- images: 1:1 should be square. rethink masonry
+
 - [x] update to AI sdk beta v6, including agents
 - add toolcalling loop to agents
 - [x] add message history and previous chats for user
@@ -17,6 +32,9 @@
 - subscribers table and admin interface to email them
 
 ##  FIXES:
+
+- fix masonry so that square images are square and 16:9 is default
+
 - migrate away from tabler and to lucide react (?)
 - make posthog optional (turn off by default)
 - telegram notification service

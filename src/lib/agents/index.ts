@@ -4,11 +4,15 @@
  * Provides agent configuration and runtime utilities.
  */
 
-// Factory for creating runtime configs from DB records
+// Factory for creating agent configs from DB records
 export {
   createAgentFromConfig,
   getDefaultAgentConfig,
-  type AgentRuntimeConfig,
+  applyCallOptions,
+  agentCallOptionsSchema,
+  type AgentCallOptions,
+  type AgentMetadata,
+  type AgentConfig,
 } from "./factory";
 
 // Tool registry and utilities
@@ -17,7 +21,6 @@ export {
   getAvailableToolSlugs,
   isValidTool,
   AVAILABLE_TOOLS,
-  type ToolDefinition,
   type ToolRegistry,
   type ToolInfo,
 } from "./tools";

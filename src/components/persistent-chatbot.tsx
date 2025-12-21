@@ -8,19 +8,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { Markdown } from "@/components/markdown";
 import { ChatBreadcrumb } from "@/components/chat-breadcrumb";
+import { ToolInvocationPart } from "@/components/tool-invocation";
 
-// Message part types from AI SDK (not exported directly)
-type MessagePart =
-  | { type: "text"; text: string }
-  | { type: "tool-invocation"; toolCallId: string; toolName: string; args: unknown; state: string; result?: unknown }
-  | { type: "file"; url: string; mediaType: string }
-  | { type: "reasoning"; text: string };
+// Tool invocation state type
+type ToolState = "input-streaming" | "input-available" | "output-available" | "output-error";
+
+// Helper to check if a part is a tool part (starts with "tool-")
+function isToolPart(part: { type: string }): boolean {
+  return part.type.startsWith("tool-");
+}
+
+// Extract tool name from part type (e.g., "tool-weather" -> "weather")
+function getToolName(part: { type: string }): string {
+  return part.type.slice(5); // Remove "tool-" prefix
+}
+
+// Message part base type - parts can have various types from AI SDK
+interface MessagePartBase {
+  type: string;
+  [key: string]: unknown;
+}
 
 // Props use serializable types (Date becomes string when passed from server)
 interface SerializedMessage {
   id: string;
   role: "user" | "assistant" | "system";
-  parts: MessagePart[];
+  parts: MessagePartBase[];
   createdAt?: Date | string;
 }
 
@@ -179,6 +192,28 @@ export function PersistentChatbot({
                       <p key={i} className="text-sm whitespace-pre-wrap">
                         {part.text}
                       </p>
+                    );
+                  }
+                  if (isToolPart(part)) {
+                    // Cast to access tool-specific properties
+                    const toolPart = part as {
+                      type: string;
+                      toolCallId: string;
+                      state: ToolState;
+                      input?: unknown;
+                      output?: unknown;
+                      errorText?: string;
+                    };
+                    return (
+                      <ToolInvocationPart
+                        key={i}
+                        toolCallId={toolPart.toolCallId}
+                        toolName={getToolName(toolPart)}
+                        args={toolPart.input}
+                        state={toolPart.state}
+                        result={toolPart.output}
+                        errorText={toolPart.errorText}
+                      />
                     );
                   }
                   return null;

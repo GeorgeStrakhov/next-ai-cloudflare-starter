@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,9 +22,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { Agent } from "@/db/schema/agents";
+import { AVAILABLE_TOOLS, type ToolInfo } from "@/lib/agents/tools";
 
 // Available models (should match LLM_MODELS in types.ts)
 const AVAILABLE_MODELS = [
@@ -34,6 +37,13 @@ const AVAILABLE_MODELS = [
   { id: "mistralai/mistral-small-creative", name: "Mistral Small", provider: "Mistral" },
 ];
 
+// Category labels and icons
+const CATEGORY_INFO: Record<ToolInfo["category"], { label: string; color: string }> = {
+  utilities: { label: "Utilities", color: "bg-blue-500/10 text-blue-600" },
+  research: { label: "Research", color: "bg-purple-500/10 text-purple-600" },
+  creative: { label: "Creative", color: "bg-pink-500/10 text-pink-600" },
+};
+
 interface AgentFormProps {
   agent?: Agent;
   mode: "create" | "edit";
@@ -42,6 +52,16 @@ interface AgentFormProps {
 export function AgentForm({ agent, mode }: AgentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Parse existing enabled tools from agent
+  const parseEnabledTools = (): string[] => {
+    if (!agent?.enabledTools) return [];
+    try {
+      return JSON.parse(agent.enabledTools);
+    } catch {
+      return [];
+    }
+  };
 
   // Form state
   const [name, setName] = useState(agent?.name || "");
@@ -54,6 +74,13 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
   const [visibility, setVisibility] = useState<"public" | "admin_only">(
     agent?.visibility || "admin_only"
   );
+  const [enabledTools, setEnabledTools] = useState<string[]>(parseEnabledTools());
+
+  const toggleTool = (slug: string) => {
+    setEnabledTools((prev) =>
+      prev.includes(slug) ? prev.filter((t) => t !== slug) : [...prev, slug]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +101,12 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
       const url = mode === "create" ? "/api/admin/agents" : `/api/admin/agents/${agent?.id}`;
       const method = mode === "create" ? "POST" : "PATCH";
 
+      // Build tool approvals (all false by default - no human-in-the-loop yet)
+      const toolApprovals: Record<string, boolean> = {};
+      for (const slug of enabledTools) {
+        toolApprovals[slug] = false;
+      }
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -84,6 +117,8 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
           model,
           isDefault,
           visibility,
+          enabledTools,
+          toolApprovals,
         }),
       });
 
@@ -102,6 +137,16 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  // Group tools by category
+  const toolsByCategory = AVAILABLE_TOOLS.reduce(
+    (acc, tool) => {
+      if (!acc[tool.category]) acc[tool.category] = [];
+      acc[tool.category].push(tool);
+      return acc;
+    },
+    {} as Record<ToolInfo["category"], ToolInfo[]>
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -219,18 +264,60 @@ export function AgentForm({ agent, mode }: AgentFormProps) {
         </CardContent>
       </Card>
 
-      {/* Tools section - placeholder for Phase 4 */}
-      <Card className="opacity-60">
+      <Card>
         <CardHeader>
           <CardTitle>Tools</CardTitle>
           <CardDescription>
-            Enable tools for this agent (coming soon)
+            Enable tools that this agent can use during conversations
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Tool configuration will be available in a future update.
-          </p>
+        <CardContent className="space-y-6">
+          {Object.entries(toolsByCategory).map(([category, tools]) => (
+            <div key={category} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className={CATEGORY_INFO[category as ToolInfo["category"]].color}>
+                  {CATEGORY_INFO[category as ToolInfo["category"]].label}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                {tools.map((tool) => (
+                  <div
+                    key={tool.slug}
+                    className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <Checkbox
+                      id={`tool-${tool.slug}`}
+                      checked={enabledTools.includes(tool.slug)}
+                      onCheckedChange={() => toggleTool(tool.slug)}
+                    />
+                    <div className="flex-1 space-y-1">
+                      <label
+                        htmlFor={`tool-${tool.slug}`}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {tool.name}
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        {tool.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {AVAILABLE_TOOLS.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No tools available yet.
+            </p>
+          )}
+          {enabledTools.length > 0 && (
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                {enabledTools.length} tool{enabledTools.length !== 1 ? "s" : ""} enabled
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

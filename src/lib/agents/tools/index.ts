@@ -2,29 +2,17 @@
  * Tool Registry
  *
  * Central registry of all available tools that agents can use.
- * Each tool is a function that the AI can invoke during a conversation.
- *
- * Tools are defined using the AI SDK's tool() helper and include:
- * - Description: Helps the AI understand when to use the tool
- * - Parameters: Zod schema defining the tool's input
- * - Execute: The function that runs when the tool is invoked
- *
- * Phase 4 will implement actual tools here (web_search, calculator, etc.)
+ * Tools are imported from the ai/tools directory (from AI tools registry).
  */
 
-// Phase 4: import { tool } from "ai"; - will be used when implementing tools
-
-/**
- * Tool definition type (placeholder until Phase 4)
- * Will be: ReturnType<typeof tool> when tools are implemented
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ToolDefinition = any;
+import { getWeatherTool } from "@ai-tools/weather/tool";
+import { webSearchDDGTool } from "@ai-tools/websearch/tool";
 
 /**
  * Registry of tool slug -> tool definition
  */
-export type ToolRegistry = Record<string, ToolDefinition>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ToolRegistry = Record<string, any>;
 
 /**
  * Tool metadata for admin UI
@@ -33,41 +21,39 @@ export interface ToolInfo {
   slug: string;
   name: string;
   description: string;
-  /** Whether this tool requires user approval before execution */
+  /** Category for grouping in admin UI */
+  category: "utilities" | "research" | "creative";
+  /** Whether this tool requires user approval before execution by default */
   requiresApproval: boolean;
 }
 
 /**
  * All available tools in the system.
- * Add new tools here as they are implemented in Phase 4.
+ * Keys are the tool slugs used in the database.
  */
-const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
-  // Phase 4: Implement actual tools
-  // Example structure:
-  //
-  // web_search: tool({
-  //   description: "Search the web for current information",
-  //   parameters: z.object({
-  //     query: z.string().describe("The search query"),
-  //   }),
-  //   execute: async ({ query }) => {
-  //     // Implementation
-  //     return { results: [] };
-  //   },
-  // }),
+const TOOL_DEFINITIONS: ToolRegistry = {
+  weather: getWeatherTool,
+  websearch: webSearchDDGTool,
 };
 
 /**
  * Metadata about each tool for the admin UI
  */
 export const AVAILABLE_TOOLS: ToolInfo[] = [
-  // Phase 4: Add tool metadata here
-  // {
-  //   slug: "web_search",
-  //   name: "Web Search",
-  //   description: "Search the web for current information",
-  //   requiresApproval: false,
-  // },
+  {
+    slug: "weather",
+    name: "Weather Lookup",
+    description: "Get current weather for any location using Open-Meteo API (free, no API key)",
+    category: "utilities",
+    requiresApproval: false,
+  },
+  {
+    slug: "websearch",
+    name: "Topic Lookup",
+    description: "Look up factual information about topics, people, places using DuckDuckGo (free, no API key)",
+    category: "research",
+    requiresApproval: false,
+  },
 ];
 
 /**
@@ -87,8 +73,7 @@ export function getToolsForAgent(
   for (const slug of enabledSlugs) {
     const toolDef = TOOL_DEFINITIONS[slug];
     if (toolDef) {
-      // TODO Phase 4: Handle approval requirements
-      // If approvals[slug] is true, wrap tool with confirmation step
+      // TODO: Handle approval requirements when we implement human-in-the-loop
       tools[slug] = toolDef;
     } else {
       console.warn(`Tool "${slug}" is enabled but not defined in registry`);

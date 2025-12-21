@@ -1,14 +1,13 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { v4 as uuidv4 } from "uuid";
 import { eq, and } from "drizzle-orm";
-import { LLM_MODELS, getOpenRouter, type LLMModel } from "@/lib/services/llm";
 import { requireAuth } from "@/lib/admin";
 import { getDb, chat, agent, chatMessage } from "@/db";
 import {
   createAgentFromConfig,
   getDefaultAgentConfig,
   generateChatTitle,
-  type AgentRuntimeConfig,
+  type AgentConfig,
 } from "@/lib/agents";
 
 export const maxDuration = 30;
@@ -16,7 +15,6 @@ export const maxDuration = 30;
 interface ChatRequest {
   messages: UIMessage[];
   chatId?: string;
-  model?: string; // Used in simple mode (no chatId)
 }
 
 export async function POST(request: Request) {
@@ -25,12 +23,12 @@ export async function POST(request: Request) {
     const { session, error } = await requireAuth();
     if (error) return error;
 
-    const { messages, chatId, model: modelFromBody }: ChatRequest = await request.json();
+    const { messages, chatId }: ChatRequest = await request.json();
 
-    let agentConfig: AgentRuntimeConfig | null = null;
+    let agentConfig: AgentConfig | null = null;
     let chatRecord: { id: string; title: string | null; agentId: string } | null = null;
 
-    // If chatId provided, load chat and agent config
+    // If chatId provided, load chat and agent
     if (chatId) {
       const db = await getDb();
 
@@ -56,7 +54,7 @@ export async function POST(request: Request) {
         agentId: chatData.agentId,
       };
 
-      // Get full agent record and create runtime config
+      // Get full agent record and create config
       const [agentData] = await db
         .select()
         .from(agent)
@@ -70,30 +68,26 @@ export async function POST(request: Request) {
 
     // Use agent config or fall back to defaults
     const defaultConfig = getDefaultAgentConfig();
-    let runtimeModel = agentConfig?.model ?? defaultConfig.model;
-    const runtimeSystem = agentConfig?.system ?? defaultConfig.system;
-    const runtimeTools = agentConfig?.tools ?? defaultConfig.tools;
+    const config = agentConfig ?? defaultConfig;
+    const modelId = agentConfig?.metadata?.modelId ?? "google/gemini-2.5-flash";
 
-    // In simple mode, allow model override from request body
-    if (!chatId && modelFromBody) {
-      const validModels = Object.values(LLM_MODELS);
-      if (validModels.includes(modelFromBody as LLMModel)) {
-        const openrouter = getOpenRouter();
-        runtimeModel = openrouter(modelFromBody);
-      }
-    }
-
-    const modelId = agentConfig?.metadata.modelId ?? modelFromBody ?? "google/gemini-2.5-flash";
-    console.log("Using model:", modelId, chatId ? `(chat: ${chatId})` : "(simple mode)");
+    console.log(
+      "Using agent:",
+      agentConfig?.metadata?.agentName ?? "Default",
+      `(model: ${modelId})`,
+      chatId ? `(chat: ${chatId})` : "(simple mode)",
+      config.tools ? `with ${Object.keys(config.tools).length} tools` : ""
+    );
 
     const modelMessages = await convertToModelMessages(messages);
 
-    // Stream the response
+    // Stream response using agent config
     const result = streamText({
-      model: runtimeModel,
+      model: config.model,
+      system: config.system,
+      tools: config.tools,
+      stopWhen: config.stopWhen,
       messages: modelMessages,
-      system: runtimeSystem,
-      tools: runtimeTools,
       temperature: 0.7,
       onFinish: async ({ response }) => {
         // Only persist if we have a chat record
@@ -102,10 +96,10 @@ export async function POST(request: Request) {
         try {
           const db = await getDb();
 
-          // Get the last user message and assistant response from the input
+          // Get the last user message
           const lastUserMessage = messages.findLast((m) => m.role === "user");
 
-          // Save user message if it exists and is new
+          // Save user message if it exists
           if (lastUserMessage) {
             await db.insert(chatMessage).values({
               id: lastUserMessage.id || uuidv4(),
@@ -116,40 +110,91 @@ export async function POST(request: Request) {
             }).onConflictDoNothing();
           }
 
-          // Save assistant response
-          // The response.messages contains the assistant's response
-          const assistantMessages = response.messages.filter((m) => m.role === "assistant");
-          for (const msg of assistantMessages) {
-            // Convert CoreMessage to UIMessage parts format
-            const parts = [];
-            if (typeof msg.content === "string") {
-              parts.push({ type: "text", text: msg.content });
-            } else if (Array.isArray(msg.content)) {
+          // Build tool data map from response.messages
+          // Note: toolCalls/toolResults from callback only have final step data
+          // We need to parse all messages to get tool calls from earlier steps
+          const toolCallMap = new Map<string, {
+            toolName: string;
+            toolCallId: string;
+            input: unknown;
+            output?: unknown;
+          }>();
+
+          // Parse response.messages to extract tool calls and results
+          for (const msg of response.messages) {
+            if (msg.role === "assistant" && Array.isArray(msg.content)) {
               for (const part of msg.content) {
-                if (part.type === "text") {
-                  parts.push({ type: "text", text: part.text });
-                } else if (part.type === "tool-call") {
-                  // Cast to access args - AI SDK v6 beta types may be incomplete
-                  const toolPart = part as unknown as { toolCallId: string; toolName: string; args: unknown };
-                  parts.push({
-                    type: "tool-invocation",
-                    toolCallId: toolPart.toolCallId,
+                if (part.type === "tool-call") {
+                  // AI SDK v6: tool-call has toolCallId, toolName, input
+                  const toolPart = part as { toolCallId: string; toolName: string; input: unknown };
+                  toolCallMap.set(toolPart.toolCallId, {
                     toolName: toolPart.toolName,
-                    args: toolPart.args,
-                    state: "output-available",
+                    toolCallId: toolPart.toolCallId,
+                    input: toolPart.input,
                   });
                 }
               }
+            } else if (msg.role === "tool" && Array.isArray(msg.content)) {
+              for (const toolResult of msg.content) {
+                if (toolResult.type === "tool-result") {
+                  // AI SDK v6: tool-result has toolCallId, output (wrapped in {type, value})
+                  const resultPart = toolResult as {
+                    toolCallId: string;
+                    output: { type: string; value: unknown } | unknown;
+                  };
+                  const existing = toolCallMap.get(resultPart.toolCallId);
+                  if (existing) {
+                    // Unwrap the output if it's in {type: "json", value: ...} format
+                    const output = resultPart.output;
+                    if (output && typeof output === "object" && "value" in output) {
+                      existing.output = (output as { value: unknown }).value;
+                    } else {
+                      existing.output = output;
+                    }
+                  }
+                }
+              }
             }
+          }
 
+          // Build final assistant message parts
+          const assistantParts: Array<Record<string, unknown>> = [];
+
+          // Add tool invocations with merged input/output
+          for (const toolData of toolCallMap.values()) {
+            assistantParts.push({
+              type: `tool-${toolData.toolName}`,
+              toolCallId: toolData.toolCallId,
+              state: "output-available",
+              input: toolData.input,
+              output: toolData.output,
+            });
+          }
+
+          // Add final text from the last assistant message
+          const lastAssistantMsg = response.messages.findLast(
+            (m) => m.role === "assistant"
+          );
+          if (lastAssistantMsg) {
+            if (typeof lastAssistantMsg.content === "string") {
+              assistantParts.push({ type: "text", text: lastAssistantMsg.content });
+            } else if (Array.isArray(lastAssistantMsg.content)) {
+              for (const part of lastAssistantMsg.content) {
+                if (part.type === "text") {
+                  assistantParts.push({ type: "text", text: part.text });
+                }
+              }
+            }
+          }
+
+          // Save single combined assistant message
+          if (assistantParts.length > 0) {
             await db.insert(chatMessage).values({
               id: uuidv4(),
               chatId: chatRecord.id,
               role: "assistant",
-              parts: JSON.stringify(parts),
-              metadata: JSON.stringify({
-                model: modelId,
-              }),
+              parts: JSON.stringify(assistantParts),
+              metadata: JSON.stringify({ model: modelId }),
               createdAt: new Date(),
             });
           }
@@ -162,7 +207,6 @@ export async function POST(request: Request) {
 
           // Generate title if this is the first exchange
           if (!chatRecord.title && messages.length >= 1) {
-            // Get all messages from this chat for title generation
             const allMessages = await db
               .select()
               .from(chatMessage)
@@ -183,7 +227,6 @@ export async function POST(request: Request) {
           }
         } catch (persistError) {
           console.error("Error persisting chat messages:", persistError);
-          // Don't throw - the response has already been sent
         }
       },
     });
