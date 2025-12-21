@@ -113,7 +113,7 @@ export function DashboardSidebar({ user, isAdmin }: DashboardSidebarProps) {
                     >
                       <div className="flex items-center gap-2">
                         <IconMessageCircle className="size-4" />
-                        <span>AI Chats</span>
+                        <span>Chats</span>
                       </div>
                       <IconChevronRight
                         className={`size-4 transition-transform duration-200 ${

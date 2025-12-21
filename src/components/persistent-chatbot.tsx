@@ -207,10 +207,12 @@ export function PersistentChatbot({
     }
   };
 
-  // Get text content from a message
+  // Get all text content from a message (combines all text parts)
   const getMessageText = (message: UIMessage): string => {
-    const textPart = message.parts.find((p) => p.type === "text");
-    return textPart && "text" in textPart ? (textPart.text as string) : "";
+    return message.parts
+      .filter((p) => p.type === "text" && "text" in p)
+      .map((p) => (p as { text: string }).text)
+      .join("\n\n");
   };
 
   // Open edit dialog for a user message
@@ -258,7 +260,7 @@ export function PersistentChatbot({
   };
 
   // Handle retry click - show dialog if not last message, otherwise retry directly
-  const handleRetryClick = (message: UIMessage, index: number) => {
+  const handleRetryClick = (_message: UIMessage, index: number) => {
     const userMessageIndex = index - 1;
     if (userMessageIndex < 0 || messages[userMessageIndex].role !== "user") {
       toast.error("No user message found to retry");

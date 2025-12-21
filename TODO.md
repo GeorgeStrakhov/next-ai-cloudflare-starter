@@ -4,7 +4,13 @@
 - add perplexity tool via https://www.npmjs.com/package/@perplexity-ai/ai-sdk
 - add exa tool via https://www.npmjs.com/package/@exalabs/ai-sdk
 
-- add image editing via our replicate image gen (nano banana pro)
+- add image editing tool to chat via our replicate image gen (nano banana pro)
+
+- implement image search in gallery (through prompts)
+
+- to agents: add colors and profile pics, then display them in chat (?)
+
+- allow users to create their own agents (?) - only scoped to them
 
 - images: 1:1 should be square. rethink masonry
 - images: add vectorize (svg)

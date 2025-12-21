@@ -34,6 +34,8 @@ export type AspectRatio = (typeof ASPECT_RATIOS)[number];
 // Output schema for type inference
 export const ImageGenResultSchema = z.object({
   imageUrl: z.string().describe("URL of the generated image"),
+  key: z.string().describe("Storage key for the image"),
+  size: z.number().describe("File size in bytes"),
   model: z.string().describe("Model used for generation"),
   aspectRatio: z.string().describe("Aspect ratio of the image"),
   prompt: z.string().describe("The prompt used"),
@@ -68,6 +70,8 @@ Use flux-schnell for quick generations, imagen-4-ultra for photorealistic, flux-
 
     return {
       imageUrl: result.imageUrl,
+      key: result.key,
+      size: result.size,
       model,
       aspectRatio,
       prompt,

@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { user } from "./auth-generated";
+import { chat } from "./chats";
+import { chatMessage } from "./chat-messages";
 
 /**
  * Image operations history
@@ -16,6 +18,12 @@ export const imageOperation = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+
+    // Source context (for images created in chat)
+    chatId: text("chat_id").references(() => chat.id, { onDelete: "set null" }),
+    chatMessageId: text("chat_message_id").references(() => chatMessage.id, {
+      onDelete: "set null",
+    }),
 
     // Operation type: 'generate', 'edit', 'remove_bg', 'upscale', 'upload'
     operationType: text("operation_type").notNull(),
@@ -43,6 +51,9 @@ export const imageOperation = sqliteTable(
 
     // Favorite
     favorite: integer("favorite", { mode: "boolean" }).default(false).notNull(),
+
+    // Soft delete - hidden images are not shown in gallery but file remains in R2
+    hidden: integer("hidden", { mode: "boolean" }).default(false).notNull(),
 
     // Timestamps
     createdAt: integer("created_at", { mode: "timestamp_ms" })

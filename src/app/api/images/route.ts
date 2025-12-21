@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     // Build query conditions
-    const conditions = [eq(imageOperation.userId, session.user.id)];
+    const conditions = [
+      eq(imageOperation.userId, session.user.id),
+      eq(imageOperation.hidden, false), // Exclude soft-deleted images
+    ];
 
     if (filter && filter !== "all") {
       conditions.push(eq(imageOperation.operationType, filter));
@@ -153,7 +156,8 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * DELETE /api/images - Delete multiple images (bulk delete)
+ * DELETE /api/images - Soft delete multiple images (hide from gallery)
+ * Images are hidden but R2 files remain (for chat references, etc.)
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -172,9 +176,9 @@ export async function DELETE(request: NextRequest) {
 
     const db = await getDb();
 
-    // Verify ownership and get keys for R2 deletion
+    // Verify ownership
     const images = await db
-      .select()
+      .select({ id: imageOperation.id })
       .from(imageOperation)
       .where(
         and(
@@ -190,19 +194,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete from R2 (import deleteFile dynamically to avoid issues)
-    const { deleteFile } = await import("@/lib/services/s3");
-    const deletePromises = images.map((img) =>
-      deleteFile(img.outputKey).catch((err) => {
-        console.error(`Failed to delete ${img.outputKey} from R2:`, err);
-        // Continue even if R2 delete fails
-      })
-    );
-    await Promise.all(deletePromises);
-
-    // Delete from database
+    // Soft delete - set hidden flag instead of deleting
     await db
-      .delete(imageOperation)
+      .update(imageOperation)
+      .set({ hidden: true, updatedAt: new Date() })
       .where(
         and(
           inArray(imageOperation.id, ids),

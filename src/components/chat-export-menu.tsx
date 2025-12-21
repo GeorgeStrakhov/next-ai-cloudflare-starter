@@ -81,9 +81,19 @@ export function ChatExportMenu({ chatId, chatTitle, messages, agentName }: ChatE
       for (const part of msg.parts) {
         if (part.type === "text" && part.text) {
           lines.push(part.text);
+          lines.push("");
+        } else if (part.type === "tool-imagegen") {
+          // Special handling for image generation
+          const output = part.output as { imageUrl?: string; prompt?: string; model?: string } | undefined;
+          if (output?.imageUrl) {
+            lines.push(`> 🖼️ **Generated image** (${output.model || "AI"}): "${output.prompt || "image"}"`);
+            lines.push(`> ![Generated image](${output.imageUrl})`);
+            lines.push("");
+          }
         } else if (part.type.startsWith("tool-")) {
           const toolName = part.type.slice(5);
           lines.push(`> 🔧 Used tool: **${toolName}**`);
+          lines.push("");
         }
       }
       lines.push("");

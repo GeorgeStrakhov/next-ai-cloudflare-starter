@@ -2,7 +2,7 @@ import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { v4 as uuidv4 } from "uuid";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "@/lib/admin";
-import { getDb, chat, agent, chatMessage } from "@/db";
+import { getDb, chat, agent, chatMessage, imageOperation } from "@/db";
 import {
   createAgentFromConfig,
   getDefaultAgentConfig,
@@ -190,15 +190,47 @@ export async function POST(request: Request) {
           }
 
           // Save single combined assistant message
+          const assistantMessageId = uuidv4();
           if (assistantParts.length > 0) {
             await db.insert(chatMessage).values({
-              id: uuidv4(),
+              id: assistantMessageId,
               chatId: chatRecord.id,
               role: "assistant",
               parts: JSON.stringify(assistantParts),
               metadata: JSON.stringify({ model: modelId }),
               createdAt: new Date(),
             });
+          }
+
+          // Save imagegen tool results to image gallery
+          for (const toolData of toolCallMap.values()) {
+            if (toolData.toolName === "imagegen" && toolData.output) {
+              const output = toolData.output as {
+                imageUrl: string;
+                key: string;
+                size: number;
+                model: string;
+                aspectRatio: string;
+                prompt: string;
+              };
+
+              await db.insert(imageOperation).values({
+                id: uuidv4(),
+                userId: session.user.id,
+                chatId: chatRecord.id,
+                chatMessageId: assistantMessageId,
+                operationType: "generate",
+                model: output.model,
+                prompt: output.prompt,
+                aspectRatio: output.aspectRatio,
+                outputUrl: output.imageUrl,
+                outputKey: output.key,
+                outputSize: output.size,
+                status: "completed",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            }
           }
 
           // Update chat's updatedAt

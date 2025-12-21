@@ -29,7 +29,9 @@ import {
   Trash2,
   Loader2,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import type { ImageOperation, OperationType } from "@/db/schema/image-operations";
 import { getTransformedImageUrl } from "@/lib/services/s3";
@@ -197,6 +199,18 @@ export function ImageDetailSheet({
                   <span className="font-medium text-right">{formatFileSize(image.outputSize)}</span>
                   <span className="text-muted-foreground">Created</span>
                   <span className="font-medium text-right">{formatDate(image.createdAt)}</span>
+                  {image.chatId && (
+                    <>
+                      <span className="text-muted-foreground">Source</span>
+                      <Link
+                        href={`/dashboard/chat/${image.chatId}`}
+                        className="font-medium text-right text-primary hover:underline inline-flex items-center justify-end gap-1"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        View in chat
+                      </Link>
+                    </>
+                  )}
                 </div>
 
                 {image.prompt && (
