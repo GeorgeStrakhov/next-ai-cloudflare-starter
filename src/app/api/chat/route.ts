@@ -4,7 +4,12 @@ import { eq, and } from "drizzle-orm";
 import { LLM_MODELS, getOpenRouter, type LLMModel } from "@/lib/services/llm";
 import { requireAuth } from "@/lib/admin";
 import { getDb, chat, agent, chatMessage } from "@/db";
-import { generateChatTitle } from "@/lib/agents/title-generator";
+import {
+  createAgentFromConfig,
+  getDefaultAgentConfig,
+  generateChatTitle,
+  type AgentRuntimeConfig,
+} from "@/lib/agents";
 
 export const maxDuration = 30;
 
@@ -22,25 +27,17 @@ export async function POST(request: Request) {
 
     const { messages, chatId, model: modelFromBody }: ChatRequest = await request.json();
 
-    let systemPrompt = "You are a helpful AI assistant. Be concise and friendly.";
-    let selectedModel: LLMModel = LLM_MODELS.GEMINI_FLASH;
+    let agentConfig: AgentRuntimeConfig | null = null;
     let chatRecord: { id: string; title: string | null; agentId: string } | null = null;
 
     // If chatId provided, load chat and agent config
     if (chatId) {
       const db = await getDb();
 
-      // Get chat with agent
+      // Get chat record
       const [chatData] = await db
-        .select({
-          id: chat.id,
-          title: chat.title,
-          agentId: chat.agentId,
-          agentModel: agent.model,
-          agentSystemPrompt: agent.systemPrompt,
-        })
+        .select()
         .from(chat)
-        .leftJoin(agent, eq(chat.agentId, agent.id))
         .where(
           and(
             eq(chat.id, chatId),
@@ -59,31 +56,44 @@ export async function POST(request: Request) {
         agentId: chatData.agentId,
       };
 
-      // Use agent's configuration
-      if (chatData.agentModel) {
-        selectedModel = chatData.agentModel as LLMModel;
-      }
-      if (chatData.agentSystemPrompt) {
-        systemPrompt = chatData.agentSystemPrompt;
-      }
-    } else {
-      // Simple mode - use model from body
-      const validModels = Object.values(LLM_MODELS);
-      if (modelFromBody && validModels.includes(modelFromBody as LLMModel)) {
-        selectedModel = modelFromBody as LLMModel;
+      // Get full agent record and create runtime config
+      const [agentData] = await db
+        .select()
+        .from(agent)
+        .where(eq(agent.id, chatData.agentId))
+        .limit(1);
+
+      if (agentData) {
+        agentConfig = createAgentFromConfig(agentData);
       }
     }
 
-    console.log("Using model:", selectedModel, chatId ? `(chat: ${chatId})` : "(simple mode)");
+    // Use agent config or fall back to defaults
+    const defaultConfig = getDefaultAgentConfig();
+    let runtimeModel = agentConfig?.model ?? defaultConfig.model;
+    const runtimeSystem = agentConfig?.system ?? defaultConfig.system;
+    const runtimeTools = agentConfig?.tools ?? defaultConfig.tools;
 
-    const openrouter = getOpenRouter();
+    // In simple mode, allow model override from request body
+    if (!chatId && modelFromBody) {
+      const validModels = Object.values(LLM_MODELS);
+      if (validModels.includes(modelFromBody as LLMModel)) {
+        const openrouter = getOpenRouter();
+        runtimeModel = openrouter(modelFromBody);
+      }
+    }
+
+    const modelId = agentConfig?.metadata.modelId ?? modelFromBody ?? "google/gemini-2.5-flash";
+    console.log("Using model:", modelId, chatId ? `(chat: ${chatId})` : "(simple mode)");
+
     const modelMessages = await convertToModelMessages(messages);
 
     // Stream the response
     const result = streamText({
-      model: openrouter(selectedModel),
+      model: runtimeModel,
       messages: modelMessages,
-      system: systemPrompt,
+      system: runtimeSystem,
+      tools: runtimeTools,
       temperature: 0.7,
       onFinish: async ({ response }) => {
         // Only persist if we have a chat record
@@ -138,7 +148,7 @@ export async function POST(request: Request) {
               role: "assistant",
               parts: JSON.stringify(parts),
               metadata: JSON.stringify({
-                model: selectedModel,
+                model: modelId,
               }),
               createdAt: new Date(),
             });

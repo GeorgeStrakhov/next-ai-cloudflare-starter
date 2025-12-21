@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/admin";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { PageHeaderProvider } from "@/components/dashboard/page-header-context";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,8 +27,10 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <DashboardSidebar user={session.user} isAdmin={userIsAdmin} />
       <SidebarInset className="flex flex-col h-[calc(100vh-theme(spacing.4))]">
-        <DashboardHeader />
-        <main className="flex flex-1 flex-col gap-4 p-4 min-h-0">{children}</main>
+        <PageHeaderProvider>
+          <DashboardHeader />
+          <main className="flex flex-1 flex-col gap-4 p-4 min-h-0">{children}</main>
+        </PageHeaderProvider>
       </SidebarInset>
     </SidebarProvider>
   );

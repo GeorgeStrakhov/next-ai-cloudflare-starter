@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { ChatBreadcrumb } from "@/components/chat-breadcrumb";
 
 export function DraftChatbot() {
   const router = useRouter();
   const [input, setInput] = useState("");
+  const [selectedAgentId, setSelectedAgentId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -43,11 +45,13 @@ export function DraftChatbot() {
 
     setIsCreating(true);
     try {
-      // Create new chat
+      // Create new chat with selected agent
       const res = await fetch("/api/chats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          agentId: selectedAgentId || undefined,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to create chat");
@@ -77,6 +81,12 @@ export function DraftChatbot() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 w-full">
+      {/* Set breadcrumb in header */}
+      <ChatBreadcrumb
+        agentId={selectedAgentId}
+        onAgentChange={setSelectedAgentId}
+      />
+
       {/* Empty messages area */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         <div className="text-center text-muted-foreground mt-8">

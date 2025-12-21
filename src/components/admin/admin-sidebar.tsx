@@ -8,6 +8,7 @@ import {
   IconArrowLeft,
   IconLayoutDashboard,
   IconLock,
+  IconRobot,
 } from "@tabler/icons-react";
 import {
   Sidebar,
@@ -47,14 +48,15 @@ const navItems = [
     icon: IconUsers,
   },
   {
+    title: "Agents",
+    url: "/admin/agents",
+    icon: IconRobot,
+  },
+  {
     title: "Access Control",
     url: "/admin/access",
     icon: IconLock,
   },
-  // Add more admin sections here as needed:
-  // { title: "Products", url: "/admin/products", icon: IconPackage },
-  // { title: "Orders", url: "/admin/orders", icon: IconReceipt },
-  // { title: "Settings", url: "/admin/settings", icon: IconSettings },
 ];
 
 export function AdminSidebar({ user }: AdminSidebarProps) {

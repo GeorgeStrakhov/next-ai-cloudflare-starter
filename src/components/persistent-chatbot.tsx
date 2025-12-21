@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { Markdown } from "@/components/markdown";
+import { ChatBreadcrumb } from "@/components/chat-breadcrumb";
 
 // Message part types from AI SDK (not exported directly)
 type MessagePart =
@@ -26,15 +27,18 @@ interface SerializedMessage {
 interface PersistentChatbotProps {
   chatId: string;
   initialMessages: SerializedMessage[];
+  agentId: string;
   agentName: string;
 }
 
 export function PersistentChatbot({
   chatId,
   initialMessages,
+  agentId,
   agentName,
 }: PersistentChatbotProps) {
   const [input, setInput] = useState("");
+  const [currentAgentId, setCurrentAgentId] = useState(agentId);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -133,6 +137,13 @@ export function PersistentChatbot({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 w-full">
+      {/* Set breadcrumb in header */}
+      <ChatBreadcrumb
+        chatId={chatId}
+        agentId={currentAgentId}
+        onAgentChange={setCurrentAgentId}
+      />
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 ? (
