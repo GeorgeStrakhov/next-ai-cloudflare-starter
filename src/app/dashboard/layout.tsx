@@ -25,9 +25,9 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar user={session.user} isAdmin={userIsAdmin} />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col h-[calc(100vh-theme(spacing.4))]">
         <DashboardHeader />
-        <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
+        <main className="flex flex-1 flex-col gap-4 p-4 min-h-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

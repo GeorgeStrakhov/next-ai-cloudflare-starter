@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, isNull } from "drizzle-orm";
 import { requireAuth } from "@/lib/admin";
 import { getDb, chat, agent, chatMessage } from "@/db";
 
@@ -41,7 +41,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where(
         and(
           eq(chat.id, id),
-          eq(chat.userId, session.user.id)
+          eq(chat.userId, session.user.id),
+          isNull(chat.deletedAt)
         )
       )
       .limit(1);
@@ -116,9 +117,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Build update object
-    const updates: Partial<{ title: string; agentId: string; updatedAt: Date }> = {
-      updatedAt: new Date(),
-    };
+    // Note: Don't update updatedAt for title changes - only for actual chat activity
+    // This prevents renamed chats from jumping to the top of the list
+    const updates: Partial<{ title: string; agentId: string; updatedAt: Date }> = {};
 
     if (title !== undefined) {
       updates.title = title;
@@ -139,6 +140,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         );
       }
       updates.agentId = agentId;
+      updates.updatedAt = new Date(); // Agent change is significant
     }
 
     // Update the chat
@@ -181,7 +183,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
- * DELETE /api/chats/[id] - Delete a single chat
+ * DELETE /api/chats/[id] - Soft delete a single chat
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
@@ -192,14 +194,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const db = await getDb();
 
-    // Verify ownership
+    // Verify ownership and not already deleted
     const [existingChat] = await db
       .select()
       .from(chat)
       .where(
         and(
           eq(chat.id, id),
-          eq(chat.userId, session.user.id)
+          eq(chat.userId, session.user.id),
+          isNull(chat.deletedAt)
         )
       )
       .limit(1);
@@ -211,14 +214,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Delete messages first (cascade should handle, but being explicit)
+    // Soft delete - set deletedAt timestamp
     await db
-      .delete(chatMessage)
-      .where(eq(chatMessage.chatId, id));
-
-    // Delete chat
-    await db
-      .delete(chat)
+      .update(chat)
+      .set({ deletedAt: new Date() })
       .where(eq(chat.id, id));
 
     return NextResponse.json({

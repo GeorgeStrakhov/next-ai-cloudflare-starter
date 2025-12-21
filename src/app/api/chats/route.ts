@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, isNull, like, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "@/lib/admin";
 import { getDb, chat, agent, chatMessage } from "@/db";
 
 /**
- * GET /api/chats - List user's chats with pagination
+ * GET /api/chats - List user's chats with pagination and search
  */
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +15,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const search = searchParams.get("search")?.trim() || "";
     const offset = (page - 1) * limit;
 
     const db = await getDb();
 
-    // Get chats with their agent info
+    // Build where conditions
+    const baseConditions = and(
+      eq(chat.userId, session.user.id),
+      isNull(chat.deletedAt)
+    );
+
+    // Add search filter if provided (case-insensitive search on title)
+    const whereConditions = search
+      ? and(
+          baseConditions,
+          like(sql`lower(${chat.title})`, `%${search.toLowerCase()}%`)
+        )
+      : baseConditions;
+
+    // Get chats with their agent info (exclude soft-deleted)
     const chats = await db
       .select({
         id: chat.id,
@@ -34,18 +49,18 @@ export async function GET(request: NextRequest) {
       })
       .from(chat)
       .leftJoin(agent, eq(chat.agentId, agent.id))
-      .where(eq(chat.userId, session.user.id))
+      .where(whereConditions)
       .orderBy(desc(chat.updatedAt))
       .limit(limit)
       .offset(offset);
 
-    // Get total count for pagination
-    const allChats = await db
-      .select({ id: chat.id })
+    // Get total count for pagination (with same filters)
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
       .from(chat)
-      .where(eq(chat.userId, session.user.id));
+      .where(whereConditions);
 
-    const total = allChats.length;
+    const total = countResult[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({

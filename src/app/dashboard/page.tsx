@@ -1,7 +1,5 @@
-export const dynamic = "force-dynamic";
-
-import { Chatbot } from "@/components/chatbot";
+import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  return <Chatbot />;
+  redirect("/dashboard/chat");
 }

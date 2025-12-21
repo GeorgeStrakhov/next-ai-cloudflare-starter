@@ -27,10 +27,14 @@ export const chat = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsec') * 1000 as integer))`)
       .notNull(),
+    // Note: We manually control updatedAt - only set it for actual chat activity (new messages),
+    // not for metadata changes like title renames
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsec') * 1000 as integer))`)
-      .$onUpdate(() => new Date())
       .notNull(),
+
+    // Soft delete
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
   (table) => [
     index("idx_chat_user_updated").on(table.userId, table.updatedAt),
