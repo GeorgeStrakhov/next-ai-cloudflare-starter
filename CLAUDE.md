@@ -12,7 +12,7 @@ This is a Next.js 15.4 (security patched) application configured to deploy on Cl
 - **Admin**: Built-in admin interface with user management
 - **Storage**: Cloudflare R2 (S3-compatible object storage)
 - **AI Image Gen**: Replicate (Imagen 4, FLUX models)
-- **AI LLM**: OpenRouter + AI SDK 5 (GPT, Gemini, Claude)
+- **AI LLM**: OpenRouter + AI SDK 6 beta (GPT, Gemini, Claude, Mistral)
 - **Analytics**: Google Analytics + PostHog (privacy-first, cookie consent integrated)
 - **Package Manager**: pnpm (not npm)
 
@@ -528,12 +528,26 @@ Public contact form at `/contact`:
 
 ### AI Features
 
+> ⚠️ **IMPORTANT: AI SDK v6 BETA** ⚠️
+>
+> This project uses **AI SDK v6 beta** (`ai@6.0.0-beta.x`, `@ai-sdk/react@3.0.0-beta.x`), NOT v5!
+>
+> **Before implementing anything related to chat or LLM, you MUST check the v6 docs:**
+> https://v6.ai-sdk.dev/
+>
+> Key v6 differences from v5:
+> - `useChat` uses `transport: new DefaultChatTransport({ api })` instead of `api` prop
+> - `sendMessage({ text })` instead of `sendMessage(text)`
+> - `message.parts` array instead of `message.content` string
+> - `convertToModelMessages()` is now async - must use `await`
+> - Import `DefaultChatTransport` from `ai` package, not `@ai-sdk/react`
+
 #### OpenRouter LLM Integration
-This starter includes LLM integration via OpenRouter and AI SDK 5:
+This starter includes LLM integration via OpenRouter and AI SDK 6 beta:
 
 - **Service Layer**: `src/lib/services/llm/` - LLM service with text generation, streaming, and structured output
 - **Chat API**: `src/app/api/chat/route.ts` - Streaming chat endpoint using AI SDK
-- **Chatbot Component**: `src/components/chatbot.tsx` - UI with model selection (GPT-4.1 Mini, Gemini 2.5 Flash, Claude Haiku 4.5)
+- **Chatbot Component**: `src/components/chatbot.tsx` - UI with model selection (GPT-4.1 Mini, Gemini 2.5 Flash, Gemini 3 Flash, Claude Haiku 4.5, Mistral Small Creative)
 - **Models**: Configured in `src/lib/services/llm/types.ts`
 
 **Setup:**

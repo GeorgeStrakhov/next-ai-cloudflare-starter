@@ -110,6 +110,14 @@ type UIMessagePart =
 
 Storing as JSON preserves the exact structure needed by the SDK and supports future part types.
 
+### Chat Attachments
+
+Chats should support file attachments (images, documents):
+- **Images**: Stored in R2, referenced in message parts as `{ type: 'file', url, mediaType }`
+- **Documents**: PDF, text files - stored in R2, can be used for context
+- **UI**: Drag-and-drop or paste into chat input
+- **Storage**: Reuse existing R2 infrastructure from `src/lib/services/s3/`
+
 ### Seed Data
 
 On first migration, seed a default agent:
@@ -120,7 +128,7 @@ On first migration, seed a default agent:
   slug: "assistant",
   description: "A helpful AI assistant for general tasks",
   system_prompt: "You are a helpful AI assistant. Be concise and friendly.",
-  model: "openai/gpt-4.1-mini",
+  model: "google/gemini-2.5-flash",  // Fast and capable default
   enabled_tools: JSON.stringify(["web_search"]),
   tool_approvals: JSON.stringify({ web_search: false }), // auto-execute
   is_default: true,
@@ -202,10 +210,27 @@ export const TOOL_REGISTRY = {
     }),
   },
 
+  // Image tools - uses existing Replicate service (src/lib/services/replicate/)
+  image_generation: {
+    slug: "image_generation",
+    name: "Image Generation",
+    description: "Generate images from text prompts using AI (Replicate API)",
+    category: "creative",
+    // Uses: generateImage() from src/lib/services/replicate/
+    // Models: Imagen 4 Ultra, FLUX 1.1 Pro, FLUX Schnell
+  },
+
+  image_editing: {
+    slug: "image_editing",
+    name: "Image Editing",
+    description: "Edit images with AI - upscale, remove background, etc. (Replicate API)",
+    category: "creative",
+    // Uses: editImage(), upscaleImage(), removeBackground() from src/lib/services/replicate/
+  },
+
   // Future tools (can add later)...
   // calculator: { ... },
   // code_interpreter: { ... },
-  // image_generator: { ... },
 } as const;
 ```
 

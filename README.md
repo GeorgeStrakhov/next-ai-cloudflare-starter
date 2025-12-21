@@ -15,7 +15,7 @@ A production-ready Next.js 15 starter template optimized for Cloudflare Workers 
 - 🪣 **Cloudflare R2** object storage with CDN
 - 🖼️ **Image transformations** via Cloudflare
 - 🤖 **Replicate AI** integration for image generation
-- 🧠 **OpenRouter LLM** integration with AI SDK (chatbot with GPT, Gemini, Claude)
+- 🧠 **OpenRouter LLM** integration with AI SDK 6 (chatbot with GPT, Gemini, Claude, Mistral)
 - 📊 **Analytics** with Google Analytics + PostHog support (privacy-first, cookie consent integrated)
 - 🚀 **GitHub Actions** CI/CD pipeline
 - 🌍 **Three-environment setup**: Local → Staging → Production
@@ -103,7 +103,7 @@ Visit http://localhost:3000
 | Email          | Postmark                      |
 | Storage        | Cloudflare R2 (S3-compatible) |
 | AI Images      | Replicate                     |
-| AI LLM         | OpenRouter + AI SDK           |
+| AI LLM         | OpenRouter + AI SDK 6         |
 | Analytics      | Google Analytics + PostHog    |
 | Styling        | Tailwind CSS v4               |
 | UI Components  | shadcn/ui + Radix UI          |
