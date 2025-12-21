@@ -81,7 +81,7 @@ export function ImageGallery() {
         const response = await fetch(`/api/images?${params}`);
         if (!response.ok) throw new Error("Failed to fetch images");
 
-        const data = await response.json();
+        const data: { images: ImageOperation[]; pagination: PaginationData } = await response.json();
 
         if (append) {
           setImages((prev) => [...prev, ...data.images]);
@@ -121,8 +121,8 @@ export function ImageGallery() {
         try {
           const response = await fetch(`/api/images/${id}`);
           if (response.ok) {
-            const data = await response.json();
-            const image = data.image as ImageOperation;
+            const data: { image: ImageOperation } = await response.json();
+            const image = data.image;
 
             if (image.status !== "pending") {
               completedIds.push(id);
@@ -179,12 +179,12 @@ export function ImageGallery() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: { error?: string } = await response.json();
         throw new Error(error.error || "Generation failed");
       }
 
-      const result = await response.json();
-      const newImage = result.image as ImageOperation;
+      const result: { image: ImageOperation } = await response.json();
+      const newImage = result.image;
 
       // Add to beginning of list
       setImages((prev) => [newImage, ...prev]);
@@ -211,11 +211,11 @@ export function ImageGallery() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error: { error?: string } = await response.json();
       throw new Error(error.error || "Upload failed");
     }
 
-    const result = await response.json();
+    const result: { image: ImageOperation } = await response.json();
     setImages((prev) => [result.image, ...prev]);
     toast.success("Image uploaded!");
   };
@@ -233,12 +233,12 @@ export function ImageGallery() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error: { error?: string } = await response.json();
       throw new Error(error.error || "Edit failed");
     }
 
-    const result = await response.json();
-    const newImage = result.image as ImageOperation;
+    const result: { image: ImageOperation } = await response.json();
+    const newImage = result.image;
 
     setImages((prev) => [newImage, ...prev]);
 
@@ -264,12 +264,12 @@ export function ImageGallery() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: { error?: string } = await response.json();
         throw new Error(error.error || "Background removal failed");
       }
 
-      const result = await response.json();
-      const newImage = result.image as ImageOperation;
+      const result: { image: ImageOperation } = await response.json();
+      const newImage = result.image;
 
       setImages((prev) => [newImage, ...prev]);
 
@@ -295,12 +295,12 @@ export function ImageGallery() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: { error?: string } = await response.json();
         throw new Error(error.error || "Upscale failed");
       }
 
-      const result = await response.json();
-      const newImage = result.image as ImageOperation;
+      const result: { image: ImageOperation } = await response.json();
+      const newImage = result.image;
 
       setImages((prev) => [newImage, ...prev]);
 
@@ -321,7 +321,7 @@ export function ImageGallery() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error: { error?: string } = await response.json();
       throw new Error(error.error || "Delete failed");
     }
 
@@ -339,7 +339,7 @@ export function ImageGallery() {
         throw new Error("Failed to toggle favorite");
       }
 
-      const result = await response.json();
+      const result: { favorite: boolean } = await response.json();
 
       // Update the image in state
       setImages((prev) =>
@@ -368,7 +368,7 @@ export function ImageGallery() {
         throw new Error("Failed to delete images");
       }
 
-      const result = await response.json();
+      const result: { deleted: number } = await response.json();
 
       // Remove deleted images from state
       const deletedIds = new Set(selectedForEdit.map((img) => img.id));

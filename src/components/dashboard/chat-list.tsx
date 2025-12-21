@@ -95,7 +95,7 @@ export function ChatList({ onLinkClick }: ChatListProps) {
       const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
       const res = await fetch(`/api/chats?limit=${CHATS_PER_PAGE}&page=${page}${searchParam}`);
       if (!res.ok) throw new Error("Failed to fetch chats");
-      const data = await res.json();
+      const data: { chats: ChatItem[]; pagination: { total: number; hasMore: boolean } } = await res.json();
 
       if (append) {
         setChats((prev) => [...prev, ...data.chats]);

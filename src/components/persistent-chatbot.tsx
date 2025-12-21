@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat, type UIMessage, type UIMessagePart } from "@ai-sdk/react";
+import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { Markdown } from "@/components/markdown";
 
+// Message part types from AI SDK (not exported directly)
+type MessagePart =
+  | { type: "text"; text: string }
+  | { type: "tool-invocation"; toolCallId: string; toolName: string; args: unknown; state: string; result?: unknown }
+  | { type: "file"; url: string; mediaType: string }
+  | { type: "reasoning"; text: string };
+
 // Props use serializable types (Date becomes string when passed from server)
 interface SerializedMessage {
   id: string;
   role: "user" | "assistant" | "system";
-  parts: UIMessagePart[];
+  parts: MessagePart[];
   createdAt?: Date | string;
 }
 

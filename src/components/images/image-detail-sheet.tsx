@@ -31,7 +31,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { ImageOperation, OperationType } from "@/db/schema/image-operations";
 import { getTransformedImageUrl } from "@/lib/services/s3";
 

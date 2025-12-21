@@ -55,7 +55,7 @@ Assistant: ${assistantText}
 
 Title:`,
       temperature: 0.7,
-      maxTokens: 20,
+      maxOutputTokens: 20,
     });
 
     // Clean up the title

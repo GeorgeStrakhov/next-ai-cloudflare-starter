@@ -119,11 +119,13 @@ export async function POST(request: Request) {
                 if (part.type === "text") {
                   parts.push({ type: "text", text: part.text });
                 } else if (part.type === "tool-call") {
+                  // Cast to access args - AI SDK v6 beta types may be incomplete
+                  const toolPart = part as unknown as { toolCallId: string; toolName: string; args: unknown };
                   parts.push({
                     type: "tool-invocation",
-                    toolCallId: part.toolCallId,
-                    toolName: part.toolName,
-                    args: part.args,
+                    toolCallId: toolPart.toolCallId,
+                    toolName: toolPart.toolName,
+                    args: toolPart.args,
                     state: "output-available",
                   });
                 }

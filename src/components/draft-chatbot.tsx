@@ -52,7 +52,7 @@ export function DraftChatbot() {
 
       if (!res.ok) throw new Error("Failed to create chat");
 
-      const data = await res.json();
+      const data: { chat: { id: string } } = await res.json();
       const chatId = data.chat.id;
 
       // Store the draft message to be sent after redirect

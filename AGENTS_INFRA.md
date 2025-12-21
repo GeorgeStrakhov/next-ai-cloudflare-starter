@@ -118,6 +118,158 @@ Chats should support file attachments (images, documents):
 - **UI**: Drag-and-drop or paste into chat input
 - **Storage**: Reuse existing R2 infrastructure from `src/lib/services/s3/`
 
+#### Image Processing Pipeline
+
+Mobile uploads and screenshots can be huge (10-20MB). Process before sending to LLM:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Client-Side (before upload)                                     │
+├─────────────────────────────────────────────────────────────────┤
+│  1. User drops/pastes/selects image                              │
+│  2. Check dimensions and file size                               │
+│  3. If > 2048px or > 2MB:                                        │
+│     - Resize to max 2048px (preserve aspect ratio)               │
+│     - Compress to JPEG/WebP quality 85%                          │
+│     - Target: < 500KB for most images                            │
+│  4. Generate thumbnail for preview (200px)                       │
+│  5. Upload both original (processed) and thumbnail to R2         │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Server-Side (optional, for documents)                           │
+├─────────────────────────────────────────────────────────────────┤
+│  1. PDF: Extract text with pdf.js or similar                     │
+│  2. Store extracted text as metadata for search                  │
+│  3. Generate thumbnail of first page for preview                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Client-Side Image Resizing
+
+```typescript
+// src/lib/image-utils.ts
+const MAX_DIMENSION = 2048;
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const QUALITY = 0.85;
+
+export async function processImageForUpload(file: File): Promise<{
+  processed: Blob;
+  thumbnail: Blob;
+  width: number;
+  height: number;
+}> {
+  const img = await createImageBitmap(file);
+
+  // Calculate new dimensions
+  let { width, height } = img;
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  // Resize main image
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0, width, height);
+  const processed = await canvas.convertToBlob({
+    type: 'image/webp',
+    quality: QUALITY
+  });
+
+  // Generate thumbnail (200px max)
+  const thumbSize = Math.min(200, width, height);
+  const thumbRatio = thumbSize / Math.max(width, height);
+  const thumbCanvas = new OffscreenCanvas(
+    Math.round(width * thumbRatio),
+    Math.round(height * thumbRatio)
+  );
+  const thumbCtx = thumbCanvas.getContext('2d')!;
+  thumbCtx.drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+  const thumbnail = await thumbCanvas.convertToBlob({
+    type: 'image/webp',
+    quality: 0.7
+  });
+
+  return { processed, thumbnail, width, height };
+}
+```
+
+#### Attachment Storage Schema
+
+```typescript
+// Stored in message parts as:
+{
+  type: 'file',
+  url: 'https://cdn.example.com/uploads/abc123.webp',
+  mediaType: 'image/webp',
+  metadata: {
+    originalName: 'screenshot.png',
+    width: 1920,
+    height: 1080,
+    thumbnailUrl: 'https://cdn.example.com/uploads/abc123-thumb.webp',
+    sizeBytes: 245000,
+  }
+}
+
+// For documents:
+{
+  type: 'file',
+  url: 'https://cdn.example.com/uploads/doc456.pdf',
+  mediaType: 'application/pdf',
+  metadata: {
+    originalName: 'report.pdf',
+    pageCount: 12,
+    thumbnailUrl: 'https://cdn.example.com/uploads/doc456-thumb.webp',
+    extractedText: '...', // For search, not sent to LLM
+    sizeBytes: 1500000,
+  }
+}
+```
+
+#### Rendering Attachments in Chat
+
+```tsx
+function FilePart({ part }: { part: FileMessagePart }) {
+  const isImage = part.mediaType.startsWith('image/');
+  const isPdf = part.mediaType === 'application/pdf';
+
+  if (isImage) {
+    return (
+      <div className="relative group">
+        <img
+          src={part.metadata?.thumbnailUrl || part.url}
+          alt={part.metadata?.originalName}
+          className="max-w-xs rounded-lg cursor-pointer"
+          onClick={() => openLightbox(part.url)}
+        />
+        <span className="absolute bottom-1 right-1 text-xs bg-black/50 text-white px-1 rounded">
+          {part.metadata?.width}×{part.metadata?.height}
+        </span>
+      </div>
+    );
+  }
+
+  if (isPdf) {
+    return (
+      <a href={part.url} target="_blank" className="flex items-center gap-2 p-3 border rounded-lg">
+        <FileIcon className="h-8 w-8 text-red-500" />
+        <div>
+          <div className="font-medium">{part.metadata?.originalName}</div>
+          <div className="text-xs text-muted-foreground">
+            {part.metadata?.pageCount} pages
+          </div>
+        </div>
+      </a>
+    );
+  }
+
+  // Generic file
+  return <FileDownloadCard part={part} />;
+}
+```
+
 ### Seed Data
 
 On first migration, seed a default agent:
@@ -634,10 +786,23 @@ function ChatMessage({ message }: { message: UIMessage }) {
 - [ ] Display tool results inline in messages
 - [ ] Add tool configuration to admin agent form
 
+### Phase 4.5: Chat Attachments (Images & Documents)
+- [ ] Create `processImageForUpload()` client-side utility (resize, compress, thumbnail)
+- [ ] Add drag-and-drop / paste / file picker to chat input
+- [ ] Show image preview in input area before sending
+- [ ] Upload processed images to R2 (reuse existing infrastructure)
+- [ ] Store file parts in message with metadata (url, dimensions, thumbnail)
+- [ ] Render image attachments in chat messages (thumbnail + lightbox)
+- [ ] Render document attachments (PDF icon, page count, download link)
+- [ ] Pass image URLs to LLM in correct format for vision models
+- [ ] (Optional) PDF text extraction for search indexing
+
 ### Phase 5: Polish & Search
-- [ ] Implement chat search with abstracted search service
-- [ ] Add chat rename functionality
-- [ ] Add chat deletion with confirmation
+- [x] Add chat rename functionality (hover edit button → dialog)
+- [x] Add chat deletion with soft delete + confirmation dialog
+- [x] Add sidebar chat search (title search with debounce)
+- [x] Add "Load More" pagination for chat history
+- [ ] Implement deep search (titles + message content) - dashboard home page
 - [ ] Responsive design for mobile
 - [ ] Error handling and loading states
 - [ ] Rate limiting for tool calls
