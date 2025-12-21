@@ -4,7 +4,7 @@
 - add perplexity tool via https://www.npmjs.com/package/@perplexity-ai/ai-sdk
 - add exa tool via https://www.npmjs.com/package/@exalabs/ai-sdk
 
-- add image generation tool via our replicate image gen
+- add image editing via our replicate image gen (nano banana pro)
 
 - images: 1:1 should be square. rethink masonry
 - images: add vectorize (svg)

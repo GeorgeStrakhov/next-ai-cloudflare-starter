@@ -157,31 +157,33 @@ export async function POST(request: Request) {
             }
           }
 
-          // Build final assistant message parts
+          // Build final assistant message parts in order
+          // We need to preserve the order: text -> tool calls -> text -> etc.
           const assistantParts: Array<Record<string, unknown>> = [];
 
-          // Add tool invocations with merged input/output
-          for (const toolData of toolCallMap.values()) {
-            assistantParts.push({
-              type: `tool-${toolData.toolName}`,
-              toolCallId: toolData.toolCallId,
-              state: "output-available",
-              input: toolData.input,
-              output: toolData.output,
-            });
-          }
-
-          // Add final text from the last assistant message
-          const lastAssistantMsg = response.messages.findLast(
-            (m) => m.role === "assistant"
-          );
-          if (lastAssistantMsg) {
-            if (typeof lastAssistantMsg.content === "string") {
-              assistantParts.push({ type: "text", text: lastAssistantMsg.content });
-            } else if (Array.isArray(lastAssistantMsg.content)) {
-              for (const part of lastAssistantMsg.content) {
-                if (part.type === "text") {
-                  assistantParts.push({ type: "text", text: part.text });
+          // Process all messages in order to preserve text/tool call sequence
+          for (const msg of response.messages) {
+            if (msg.role === "assistant") {
+              if (typeof msg.content === "string" && msg.content.trim()) {
+                assistantParts.push({ type: "text", text: msg.content });
+              } else if (Array.isArray(msg.content)) {
+                for (const part of msg.content) {
+                  if (part.type === "text" && part.text.trim()) {
+                    assistantParts.push({ type: "text", text: part.text });
+                  } else if (part.type === "tool-call") {
+                    // Get the tool data with merged output from our map
+                    const toolPart = part as { toolCallId: string; toolName: string };
+                    const toolData = toolCallMap.get(toolPart.toolCallId);
+                    if (toolData) {
+                      assistantParts.push({
+                        type: `tool-${toolData.toolName}`,
+                        toolCallId: toolData.toolCallId,
+                        state: "output-available",
+                        input: toolData.input,
+                        output: toolData.output,
+                      });
+                    }
+                  }
                 }
               }
             }

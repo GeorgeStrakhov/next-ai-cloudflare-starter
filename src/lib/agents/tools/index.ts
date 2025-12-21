@@ -7,6 +7,7 @@
 
 import { getWeatherTool } from "@ai-tools/weather/tool";
 import { webSearchDDGTool } from "@ai-tools/websearch/tool";
+import { imageGenTool } from "@ai-tools/imagegen/tool";
 
 /**
  * Registry of tool slug -> tool definition
@@ -34,6 +35,7 @@ export interface ToolInfo {
 const TOOL_DEFINITIONS: ToolRegistry = {
   weather: getWeatherTool,
   websearch: webSearchDDGTool,
+  imagegen: imageGenTool,
 };
 
 /**
@@ -52,6 +54,13 @@ export const AVAILABLE_TOOLS: ToolInfo[] = [
     name: "Topic Lookup",
     description: "Look up factual information about topics, people, places using DuckDuckGo (free, no API key)",
     category: "research",
+    requiresApproval: false,
+  },
+  {
+    slug: "imagegen",
+    name: "Image Generation",
+    description: "Generate images from text descriptions using FLUX, Imagen, or Nano Banana models (requires REPLICATE_API_KEY)",
+    category: "creative",
     requiresApproval: false,
   },
 ];

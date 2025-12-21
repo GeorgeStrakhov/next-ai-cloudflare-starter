@@ -2,8 +2,10 @@
 
 import { WeatherCard } from "@ai-tools/weather/component";
 import { WebSearchList } from "@ai-tools/websearch/component";
+import { ImageGenCard } from "@ai-tools/imagegen/component";
 import type { WeatherToolType } from "@ai-tools/weather/tool";
 import type { WebSearchToolInvocation } from "@ai-tools/websearch/tool";
+import type { ImageGenToolType } from "@ai-tools/imagegen/tool";
 
 /**
  * Tool invocation states (AI SDK v6)
@@ -48,6 +50,9 @@ export function ToolInvocationPart({
 
       case "websearch":
         return <WebSearchList invocation={invocation as WebSearchToolInvocation} />;
+
+      case "imagegen":
+        return <ImageGenCard invocation={invocation as ImageGenToolType} />;
 
       default:
         // Fallback for unknown tools - render as JSON
