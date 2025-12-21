@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,6 +8,7 @@ import {
   IconPhoto,
   IconLayoutDashboard,
   IconShield,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import {
   Sidebar,
@@ -22,8 +24,14 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { SidebarUserBadge } from "@/components/sidebar-user-badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ChatList } from "./chat-list";
 
 interface DashboardSidebarProps {
   user: {
@@ -35,29 +43,36 @@ interface DashboardSidebarProps {
   isAdmin?: boolean;
 }
 
-const navItems = [
-  {
-    title: "AI Chat",
-    url: "/dashboard",
-    icon: IconMessageCircle,
-  },
-  {
-    title: "Images",
-    url: "/dashboard/images",
-    icon: IconPhoto,
-  },
-];
+const CHATS_COLLAPSED_KEY = "dashboard-chats-collapsed";
 
 export function DashboardSidebar({ user, isAdmin }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
 
+  // Persist collapsible state in localStorage (default closed to avoid flash)
+  const [chatsOpen, setChatsOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(CHATS_COLLAPSED_KEY);
+    // Default to open if no preference stored, otherwise use stored value
+    setChatsOpen(stored === null ? true : stored === "open");
+  }, []);
+
+  const handleChatsOpenChange = (open: boolean) => {
+    setChatsOpen(open);
+    localStorage.setItem(CHATS_COLLAPSED_KEY, open ? "open" : "closed");
+  };
+
   const handleLinkClick = () => {
     if (isMobile) {
       setOpenMobile(false);
     }
   };
+
+  // Check if we're on a chat-related page
+  const isOnChatPage = pathname === "/dashboard" || pathname.startsWith("/dashboard/chat");
+  const isOnImagesPage = pathname.startsWith("/dashboard/images");
 
   return (
     <Sidebar variant="inset">
@@ -86,27 +101,49 @@ export function DashboardSidebar({ user, isAdmin }: DashboardSidebarProps) {
           <SidebarGroupLabel>Features</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive =
-                  item.url === "/dashboard"
-                    ? pathname === "/dashboard"
-                    : pathname.startsWith(item.url);
-
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.url} onClick={handleLinkClick}>
-                        <item.icon className="size-4" />
-                        <span>{item.title}</span>
-                      </Link>
+              {/* AI Chats - Collapsible */}
+              <Collapsible
+                open={chatsOpen}
+                onOpenChange={handleChatsOpenChange}
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      isActive={isOnChatPage}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <IconMessageCircle className="size-4" />
+                        <span>AI Chats</span>
+                      </div>
+                      <IconChevronRight
+                        className={`size-4 transition-transform duration-200 ${
+                          chatsOpen ? "rotate-90" : ""
+                        }`}
+                      />
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
+
+                <CollapsibleContent className="ml-4 border-l border-border pl-2 mt-1">
+                  <SidebarMenu>
+                    <ChatList onLinkClick={handleLinkClick} />
+                  </SidebarMenu>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Images */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isOnImagesPage}>
+                  <Link href="/dashboard/images" onClick={handleLinkClick}>
+                    <IconPhoto className="size-4" />
+                    <span>Images</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
       </SidebarContent>
 
       <SidebarFooter>

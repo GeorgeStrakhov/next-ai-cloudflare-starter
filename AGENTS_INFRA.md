@@ -609,13 +609,14 @@ function ChatMessage({ message }: { message: UIMessage }) {
 - [x] Update API route to use new streaming API (async `convertToModelMessages`)
 - [x] Test basic chat functionality works
 
-### Phase 2: Database Schema & Chat Persistence
-- [ ] Create `agent`, `chat`, `chat_message` tables
-- [ ] Seed default agent
-- [ ] Implement chat CRUD API routes
-- [ ] Implement message persistence in `onFinish`
-- [ ] Implement chat title auto-generation
-- [ ] Add chat history sidebar UI
+### Phase 2: Database Schema & Chat Persistence ✅ COMPLETE
+- [x] Create `agent`, `chat`, `chat_message` tables
+- [x] Seed default agent (General Assistant with Gemini 2.5 Flash)
+- [x] Implement chat CRUD API routes (`/api/chats`, `/api/chats/[id]`, `/api/agents`)
+- [x] Implement message persistence in `onFinish`
+- [x] Implement chat title auto-generation (using gpt-4.1-nano)
+- [x] Add chat history sidebar UI (collapsible with localStorage persistence)
+- [x] Load existing chats with persisted messages
 
 ### Phase 3: Multi-Agent System
 - [ ] Create agent CRUD API routes (admin)
