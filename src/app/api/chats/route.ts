@@ -26,11 +26,12 @@ export async function GET(request: NextRequest) {
       isNull(chat.deletedAt)
     );
 
-    // Add search filter if provided (case-insensitive search on title)
+    // Add search filter if provided
+    // Note: LIKE is case-insensitive for ASCII in SQLite, and matches non-ASCII exactly
     const whereConditions = search
       ? and(
           baseConditions,
-          like(sql`lower(${chat.title})`, `%${search.toLowerCase()}%`)
+          like(chat.title, `%${search}%`)
         )
       : baseConditions;
 

@@ -24,6 +24,9 @@ export const agent = sqliteTable("agent", {
 
   // Settings
   isDefault: integer("is_default", { mode: "boolean" }).default(false).notNull(),
+  visibility: text("visibility", { enum: ["public", "admin_only"] })
+    .default("admin_only")
+    .notNull(), // "public" = all users, "admin_only" = only admins can see/use
 
   // Timestamps
   createdAt: integer("created_at", { mode: "timestamp_ms" })
