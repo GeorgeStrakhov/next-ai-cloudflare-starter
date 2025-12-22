@@ -6,16 +6,25 @@ import { createAuth } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
-export default async function SignInPage() {
+interface PageProps {
+  searchParams: Promise<{ redirect?: string }>;
+}
+
+export default async function SignInPage({ searchParams }: PageProps) {
+  const { redirect: redirectTo } = await searchParams;
+
+  // Validate redirect URL - only allow internal paths
+  const callbackURL = redirectTo?.startsWith("/") ? redirectTo : "/dashboard";
+
   // Check if user is already signed in
   const auth = await createAuth();
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  // Redirect to dashboard if already authenticated
+  // Redirect if already authenticated
   if (session) {
-    redirect("/dashboard");
+    redirect(callbackURL);
   }
 
   return (
@@ -28,7 +37,7 @@ export default async function SignInPage() {
         title: appConfig.name,
       }}
       buttonText="Send magic link"
-      callbackURL="/dashboard"
+      callbackURL={callbackURL}
     />
   );
 }

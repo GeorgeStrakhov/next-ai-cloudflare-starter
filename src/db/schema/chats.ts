@@ -23,6 +23,15 @@ export const chat = sqliteTable(
     // Title (auto-generated after first exchange, user-editable)
     title: text("title"),
 
+    // Sharing settings
+    sharingUuid: text("sharing_uuid").unique(),
+    sharingEnabled: integer("sharing_enabled", { mode: "boolean" })
+      .default(false)
+      .notNull(),
+    sharingType: text("sharing_type", { enum: ["public", "platform"] })
+      .default("public")
+      .notNull(),
+
     // Timestamps
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsec') * 1000 as integer))`)
@@ -38,6 +47,7 @@ export const chat = sqliteTable(
   },
   (table) => [
     index("idx_chat_user_updated").on(table.userId, table.updatedAt),
+    index("idx_chat_sharing_uuid").on(table.sharingUuid),
   ]
 );
 

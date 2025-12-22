@@ -1,5 +1,7 @@
-## BIG THINGS:
+## TODO:
 
+- in the gallery make the sheet larger, or rethink it into a dialog
+- images: 1:1 should be square. rethink masonry
 
 - add perplexity tool via https://www.npmjs.com/package/@perplexity-ai/ai-sdk
 - add exa tool via https://www.npmjs.com/package/@exalabs/ai-sdk
@@ -12,11 +14,11 @@
 
 - allow users to create their own agents (?) - only scoped to them
 
-- images: 1:1 should be square. rethink masonry
 - images: add vectorize (svg)
 
 - add knowledge bases and embeddings (?)
 
+- admin panel: add to top level stats the agents created, and conversations had and images generated
 
 - add documents and image uploads to the chat input and rendering them and processing. make sure images (if from mobile upload or what not) are downscaled if they are huge (on the frontend) not to eat too many tokens.
 

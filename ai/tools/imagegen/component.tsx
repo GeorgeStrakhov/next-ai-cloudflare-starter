@@ -163,22 +163,25 @@ export function ImageGenCard({ invocation }: { invocation: ImageGenToolType }) {
   const { imageUrl, model, aspectRatio, prompt } = part.output;
   const modelLabel = MODEL_LABELS[model as ImageModel] || model;
 
-  // Calculate aspect ratio for the image container
-  const getAspectClass = (ratio: string) => {
+  // Calculate dimensions based on aspect ratio (base width 400px)
+  const getDimensions = (ratio: string): { width: number; height: number } => {
+    const baseWidth = 400;
     switch (ratio) {
       case "16:9":
-        return "aspect-video";
+        return { width: baseWidth, height: Math.round(baseWidth * 9 / 16) };
       case "9:16":
-        return "aspect-[9/16]";
+        return { width: baseWidth, height: Math.round(baseWidth * 16 / 9) };
       case "4:3":
-        return "aspect-[4/3]";
+        return { width: baseWidth, height: Math.round(baseWidth * 3 / 4) };
       case "3:4":
-        return "aspect-[3/4]";
+        return { width: baseWidth, height: Math.round(baseWidth * 4 / 3) };
       case "1:1":
       default:
-        return "aspect-square";
+        return { width: baseWidth, height: baseWidth };
     }
   };
+
+  const dimensions = getDimensions(aspectRatio);
 
   return (
     <>
@@ -199,17 +202,13 @@ export function ImageGenCard({ invocation }: { invocation: ImageGenToolType }) {
           </div>
         )}
         <CardContent className={cn(contentBaseClass, "space-y-3")}>
-          <div
-            className={cn(
-              "relative w-full overflow-hidden rounded-lg border border-border/50 bg-muted/30",
-              getAspectClass(aspectRatio)
-            )}
-          >
+          <div className="relative w-full overflow-hidden rounded-lg border border-border/50 bg-muted/30">
             <Image
               src={imageUrl}
               alt={prompt}
-              fill
-              className="object-cover"
+              width={dimensions.width}
+              height={dimensions.height}
+              className="w-full h-auto object-cover"
               sizes="(max-width: 448px) 100vw, 448px"
             />
             {/* Overlay buttons */}

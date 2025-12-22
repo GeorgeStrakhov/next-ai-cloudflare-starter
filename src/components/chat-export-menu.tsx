@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IconDotsVertical, IconBraces, IconMarkdown } from "@tabler/icons-react";
+import { Share2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { usePageHeader } from "@/components/dashboard/page-header-context";
 import { toast } from "sonner";
+import { ShareChatDialog } from "@/components/share-chat-dialog";
 
 interface MessagePart {
   type: string;
@@ -34,6 +37,7 @@ interface ChatExportMenuProps {
 
 export function ChatExportMenu({ chatId, chatTitle, messages, agentName }: ChatExportMenuProps) {
   const { setActions } = usePageHeader();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const exportAsJson = () => {
     const exportData = {
@@ -123,10 +127,15 @@ export function ChatExportMenu({ chatId, chatTitle, messages, agentName }: ChatE
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <IconDotsVertical className="h-4 w-4" />
-            <span className="sr-only">Export options</span>
+            <span className="sr-only">Chat options</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={exportAsJson}>
             <IconBraces className="mr-2 h-4 w-4" />
             Export as JSON
@@ -143,5 +152,13 @@ export function ChatExportMenu({ chatId, chatTitle, messages, agentName }: ChatE
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, chatId, chatTitle, agentName]);
 
-  return null;
+  if (!shareDialogOpen) return null;
+
+  return (
+    <ShareChatDialog
+      chatId={chatId}
+      open={shareDialogOpen}
+      onOpenChange={setShareDialogOpen}
+    />
+  );
 }

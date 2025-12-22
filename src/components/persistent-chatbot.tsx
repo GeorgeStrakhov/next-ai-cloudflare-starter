@@ -121,16 +121,6 @@ export function PersistentChatbot({
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Check for draft message from /dashboard/chat and send it
-  useEffect(() => {
-    const draftKey = `draft-message-${chatId}`;
-    const draftMessage = sessionStorage.getItem(draftKey);
-    if (draftMessage) {
-      sessionStorage.removeItem(draftKey);
-      sendMessage({ text: draftMessage });
-    }
-  }, [chatId, sendMessage]);
-
   // Focus textarea, sync message IDs, and notify sidebar when response completes
   useEffect(() => {
     if (status === "ready") {

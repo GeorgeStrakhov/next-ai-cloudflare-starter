@@ -7,6 +7,18 @@
  *
  * @see https://nextjs.org/docs/app/api-reference/components/image#loader
  */
-export default function cloudflareImageLoader({ src }: { src: string }) {
+export default function cloudflareImageLoader({
+  src,
+  width,
+  quality,
+}: {
+  src: string;
+  width: number;
+  quality?: number;
+}) {
+  // We ignore width/quality since Cloudflare handles optimization
+  // These params are required by Next.js loader interface
+  void width;
+  void quality;
   return src;
 }

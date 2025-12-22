@@ -29,8 +29,7 @@ const IMAGE_GENERATION_MODELS: Record<string, ModelConfig> = {
       resolution: "1 MP",
       aspect_ratio: aspectRatio,
       input_images: [],
-      output_format: "webp" as const,
-      output_quality: 80,
+      output_format: "png" as const,
       safety_tolerance: 2,
     }),
   },
@@ -42,8 +41,7 @@ const IMAGE_GENERATION_MODELS: Record<string, ModelConfig> = {
       megapixels: "1",
       num_outputs: 1,
       aspect_ratio: aspectRatio,
-      output_format: "webp" as const,
-      output_quality: 80,
+      output_format: "png" as const,
       num_inference_steps: 4,
     }),
   },
@@ -180,10 +178,7 @@ export async function generateImage(
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     let extension = "png";
     let contentType = "image/png";
-    if (model === "flux-2-pro" || model === "flux-schnell") {
-      extension = "webp";
-      contentType = "image/webp";
-    } else if (model === "nano-banana-pro") {
+    if (model === "nano-banana-pro") {
       extension = "jpg";
       contentType = "image/jpeg";
     }
