@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +24,8 @@ import {
 import { PromptBar } from "./prompt-bar";
 import { ImageCard, ImageCardSkeleton } from "./image-card";
 import { ImageDetailSheet } from "./image-detail-sheet";
+import { Masonry, MasonryItem } from "@/components/ui/masonry";
+import { useSidebar } from "@/components/ui/sidebar";
 import { EditDialog } from "./edit-dialog";
 import { UploadDialog } from "./upload-dialog";
 import type { ImageOperation, OperationType } from "@/db/schema/image-operations";
@@ -39,6 +41,22 @@ interface PaginationData {
 }
 
 export function ImageGallery() {
+  const { open: sidebarOpen } = useSidebar();
+  const isFirstRender = useRef(true);
+
+  // Trigger resize after sidebar animation completes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // Wait for sidebar animation (~300ms) then trigger resize
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [sidebarOpen]);
+
   const [images, setImages] = useState<ImageOperation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -522,9 +540,9 @@ export function ImageGallery() {
         </div>
       )}
 
-      {/* Gallery - CSS Grid with row spans for masonry effect */}
+      {/* Gallery - Masonry layout with linear ordering (newest first, left-to-right) */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-[150px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <ImageCardSkeleton key={i} />
           ))}
@@ -535,19 +553,28 @@ export function ImageGallery() {
           <p className="text-sm mt-1">Enter a prompt above to generate your first image!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-[150px]">
+        <Masonry
+          columnWidth={200}
+          gap={16}
+          maxColumnCount={5}
+          linear={true}
+          itemHeight={200}
+          overscan={10}
+          resetKey={`${images[0]?.id || "empty"}-${filter}-${favoritesOnly}`}
+        >
           {images.map((image) => (
-            <ImageCard
-              key={image.id}
-              image={image}
-              selected={selectedForEdit.some((img) => img.id === image.id)}
-              selectable={isSelectMode && image.status === "completed"}
-              onClick={() => handleImageClick(image)}
-              onToggleFavorite={handleToggleFavorite}
-              onDelete={handleDelete}
-            />
+            <MasonryItem key={image.id}>
+              <ImageCard
+                image={image}
+                selected={selectedForEdit.some((img) => img.id === image.id)}
+                selectable={isSelectMode && image.status === "completed"}
+                onClick={() => handleImageClick(image)}
+                onToggleFavorite={handleToggleFavorite}
+                onDelete={handleDelete}
+              />
+            </MasonryItem>
           ))}
-        </div>
+        </Masonry>
       )}
 
       {/* Load more */}

@@ -30,9 +30,10 @@ const OPERATION_BADGES: Record<
   upload: { label: "Uploaded", icon: "📤", variant: "outline" },
 };
 
-// Determine if image is portrait (tall) for grid row spanning
-function isPortrait(aspectRatio: string | null): boolean {
-  return aspectRatio === "9:16" || aspectRatio === "3:4";
+// Convert aspect ratio string to CSS value
+function getAspectRatio(aspectRatio: string | null): string {
+  if (!aspectRatio) return "1 / 1";
+  return aspectRatio.replace(":", " / ");
 }
 
 interface ImageCardProps {
@@ -60,7 +61,7 @@ export function ImageCard({
   const isPending = image.status === "pending";
   const isFailed = image.status === "failed";
   const badge = OPERATION_BADGES[image.operationType as OperationType];
-  const tall = isPortrait(image.aspectRatio);
+  const aspectRatio = getAspectRatio(image.aspectRatio);
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -91,11 +92,11 @@ export function ImageCard({
       <div
         className={cn(
           "group relative rounded-lg overflow-hidden bg-muted transition-all",
-          tall ? "row-span-2" : "",
           isPending || isFailed ? "cursor-default" : "cursor-pointer hover:ring-2 hover:ring-primary/50",
           selected && "ring-2 ring-primary",
           isFailed && "opacity-50"
         )}
+        style={{ aspectRatio }}
         onClick={handleClick}
       >
         {isPending ? (

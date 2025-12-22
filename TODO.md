@@ -1,7 +1,6 @@
 ## TODO:
 
 - in the gallery make the sheet larger, or rethink it into a dialog
-- images: 1:1 should be square. rethink masonry
 
 - add perplexity tool via https://www.npmjs.com/package/@perplexity-ai/ai-sdk
 - add exa tool via https://www.npmjs.com/package/@exalabs/ai-sdk
@@ -31,7 +30,6 @@
 
 - fix masonry so that square images are square and 16:9 is default
 
-- migrate away from tabler and to lucide react (?)
 - make posthog optional (turn off by default)
 - telegram notification service
 - add admin feature to broadcast messages to all users
@@ -44,4 +42,4 @@
 - add voice with real-time transcription? or just a normal whisper?
 - add waitlist and invites
 - add TTS and STT services
-- social sign-in?
+- social sign-in? (or better instructions on how to set it up)

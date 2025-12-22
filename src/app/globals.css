@@ -71,6 +71,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-spin-around: spin-around 0.8s linear infinite;
+  @keyframes spin-around {
+  0% {
+    transform: rotate(-90deg);
+    }
+  100% {
+    transform: rotate(270deg);
+    }
+  }
 }
 
 /* =============================================================================
@@ -188,4 +197,3 @@
     @apply bg-background text-foreground;
   }
 }
-
