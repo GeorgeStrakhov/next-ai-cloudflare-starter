@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@ai-tools/*": ["./ai/tools/*"]
     },
     "types": [
         "./cloudflare-env.d.ts",
