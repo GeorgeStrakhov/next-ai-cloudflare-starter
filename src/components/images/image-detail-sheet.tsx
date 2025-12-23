@@ -126,148 +126,158 @@ export function ImageDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg p-6 flex flex-col">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <span>{OPERATION_LABELS[image.operationType as OperationType]}</span>
-              <Badge
-                variant={image.status === "completed" ? "default" : "destructive"}
-              >
-                {image.status}
-              </Badge>
-            </SheetTitle>
-            <SheetDescription className="sr-only">
-              Image details and actions
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-4 flex flex-col gap-4 flex-1 min-h-0">
-            {/* Image preview - grows to fill available space, but always visible */}
-            <div className="relative flex-1 min-h-32 w-full rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              <Image
-                src={getTransformedImageUrl(image.outputUrl)}
-                alt={image.prompt || "Image"}
-                width={800}
-                height={800}
-                priority
-                className="object-contain max-w-full max-h-full"
-                sizes="(max-width: 640px) 100vw, 500px"
-              />
+        <SheetContent className="w-full sm:max-w-lg lg:max-w-4xl xl:max-w-5xl p-0 flex flex-col lg:overflow-hidden overflow-y-auto">
+          <div className="flex flex-col lg:flex-row lg:h-full">
+            {/* Image preview - side by side on desktop, top/bottom on mobile */}
+            <div className="relative aspect-square sm:aspect-video lg:aspect-auto lg:h-full lg:flex-1 bg-muted/30 flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r shrink-0">
+              <div className="absolute inset-0 lg:inset-4 flex items-center justify-center p-2 lg:p-0">
+                <Image
+                  src={getTransformedImageUrl(image.outputUrl)}
+                  alt={image.prompt || "Image"}
+                  width={1200}
+                  height={1200}
+                  priority
+                  className="object-contain max-w-full max-h-full drop-shadow-2xl p-4"
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                />
+              </div>
             </div>
 
-            {/* Content area - scrollable if long prompt */}
-            <div className="flex-shrink-0 space-y-4 max-h-[25vh] overflow-y-auto">
-              {/* URL copy */}
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">CDN URL</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={image.outputUrl}
-                    readOnly
-                    className="flex-1 text-xs bg-muted border rounded px-2 py-1.5 truncate"
-                  />
-                  <Button size="sm" variant="outline" onClick={handleCopyUrl}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(image.outputUrl, "_blank")}
+            {/* Details panel */}
+            <div className="w-full lg:w-80 xl:w-96 flex flex-col lg:h-full bg-background">
+              <SheetHeader className="p-6 border-b shrink-0">
+                <SheetTitle className="flex items-center gap-2">
+                  <span>{OPERATION_LABELS[image.operationType as OperationType]}</span>
+                  <Badge
+                    variant={image.status === "completed" ? "default" : "destructive"}
                   >
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
+                    {image.status}
+                  </Badge>
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Image details and actions
+                </SheetDescription>
+              </SheetHeader>
 
-              {/* Metadata */}
-              <div className="space-y-2 text-sm">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  {image.model && (
-                    <>
-                      <span className="text-muted-foreground">Model</span>
-                      <span className="font-medium text-right">{image.model}</span>
-                    </>
-                  )}
-                  {image.aspectRatio && (
-                    <>
-                      <span className="text-muted-foreground">Aspect Ratio</span>
-                      <span className="font-medium text-right">{image.aspectRatio}</span>
-                    </>
-                  )}
-                  <span className="text-muted-foreground">Size</span>
-                  <span className="font-medium text-right">{formatFileSize(image.outputSize)}</span>
-                  <span className="text-muted-foreground">Created</span>
-                  <span className="font-medium text-right">{formatDate(image.createdAt)}</span>
-                  {image.chatId && (
-                    <>
-                      <span className="text-muted-foreground">Source</span>
-                      <Link
-                        href={`/dashboard/chat/${image.chatId}`}
-                        className="font-medium text-right text-primary hover:underline inline-flex items-center justify-end gap-1"
-                      >
-                        <MessageSquare className="h-3 w-3" />
-                        View in chat
-                      </Link>
-                    </>
-                  )}
+              <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+                {/* URL copy */}
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">CDN URL</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={image.outputUrl}
+                      readOnly
+                      className="flex-1 text-xs bg-muted/50 border rounded-md px-3 py-2 truncate transition-colors focus:bg-background"
+                    />
+                    <Button size="icon" variant="outline" onClick={handleCopyUrl} className="shrink-0">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => window.open(image.outputUrl, "_blank")}
+                      className="shrink-0"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
+                {/* Metadata */}
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold">Metadata</p>
+                  <div className="grid gap-3">
+                    {image.model && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Model</span>
+                        <span className="font-medium bg-muted/50 px-2 py-0.5 rounded text-xs">{image.model}</span>
+                      </div>
+                    )}
+                    {image.aspectRatio && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Aspect Ratio</span>
+                        <span className="font-medium">{image.aspectRatio}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">File Size</span>
+                      <span className="font-medium">{formatFileSize(image.outputSize)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Created</span>
+                      <span className="font-medium">{formatDate(image.createdAt)}</span>
+                    </div>
+                    {image.chatId && (
+                      <div className="flex justify-between items-center text-sm pt-1 border-t">
+                        <span className="text-muted-foreground">Source</span>
+                        <Link
+                          href={`/dashboard/chat/${image.chatId}`}
+                          className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          View in chat
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Prompt */}
                 {image.prompt && (
-                  <div>
-                    <p className="font-medium text-muted-foreground mb-1">Prompt</p>
-                    <p className="text-sm">{image.prompt}</p>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">Prompt</p>
+                    <div className="text-sm bg-muted/30 p-3 rounded-md border text-foreground/90 leading-relaxed">
+                      {image.prompt}
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Actions - always visible at bottom */}
-            {image.status === "completed" && (
-              <div className="flex-shrink-0 space-y-2 pt-2 border-t">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Actions
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit?.(image)}
-                    className="justify-start"
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onRemoveBg?.(image)}
-                    className="justify-start"
-                  >
-                    <Scissors className="h-4 w-4 mr-2" />
-                    Remove BG
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onUpscale?.(image)}
-                    className="justify-start"
-                  >
-                    <ArrowUpCircle className="h-4 w-4 mr-2" />
-                    Upscale
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="justify-start text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
+              {/* Actions sticky at bottom */}
+              {image.status === "completed" && (
+                <div className="p-6 border-t bg-muted/10 shrink-0">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit?.(image)}
+                      className="justify-center h-10"
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onRemoveBg?.(image)}
+                      className="justify-center h-10"
+                    >
+                      <Scissors className="h-4 w-4 mr-2" />
+                      Remove BG
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onUpscale?.(image)}
+                      className="justify-center h-10"
+                    >
+                      <ArrowUpCircle className="h-4 w-4 mr-2" />
+                      Upscale
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="justify-center h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
